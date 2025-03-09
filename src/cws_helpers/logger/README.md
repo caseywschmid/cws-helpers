@@ -49,7 +49,7 @@ If you need to include the package in a requirements.txt file:
 # For the latest version
 git+https://github.com/caseywschmid/cws-helpers.git
 
-# For a specific version (once tags are available)
+# For a specific version
 git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
 ```
 

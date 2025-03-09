@@ -9,6 +9,8 @@ packages = [{include = "cws_helpers", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 python-dotenv = "^1.0.1"
+pydantic = "^2.10.6"
+openai = "1.65.5"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -17,3 +19,11 @@ pytest = "^8.3.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+# Add the src directory to the Python path
+pythonpath = ["src"]
+# Test file pattern
+testpaths = ["tests"]
+# Verbose output
+addopts = "-v"

@@ -18,16 +18,18 @@ cws-helpers/
 │       ├── __init__.py
 │       ├── logger/
 │       │   ├── __init__.py
-│       │   └── logger.py
+│       │   ├── logger.py
+│       │   └── README.md  # Documentation for the logger module
 │       └── your_new_helper/  # Your new helper goes here
 │           ├── __init__.py
-│           └── your_new_helper.py
+│           ├── your_new_helper.py
+│           └── README.md  # Documentation for your new helper
 ├── tests/
 │   └── your_new_helper/
 │       ├── __init__.py
 │       └── test_your_new_helper.py
 └── docs/
-    └── Your_New_Helper_Docs.md
+    └── How_to_add_a_new_helper.md  # This file
 ```
 
 ## Step-by-Step Guide
@@ -38,6 +40,7 @@ cws-helpers/
    mkdir -p tests/your_new_helper
    touch src/cws_helpers/your_new_helper/__init__.py
    touch src/cws_helpers/your_new_helper/your_new_helper.py
+   touch src/cws_helpers/your_new_helper/README.md
    touch tests/your_new_helper/__init__.py
    touch tests/your_new_helper/test_your_new_helper.py
    ```
@@ -101,11 +104,42 @@ cws-helpers/
    ```
 
 7. **Create documentation**:
-   Create a documentation file in the `docs` directory:
+   Create a README.md file in your helper's directory:
+   ```markdown
+   # Your New Helper
+   
+   Brief description of what your helper does.
+   
+   ## Installation
+   
+   This helper is included in the cws-helpers package:
+   
    ```bash
-   touch docs/Your_New_Helper_Docs.md
+   pip install git+https://github.com/caseywschmid/cws-helpers.git
    ```
-   Include detailed usage instructions, examples, and API documentation. Make sure to include clear installation instructions for users (who will use pip, not Poetry).
+   
+   ## Usage
+   
+   ```python
+   from cws_helpers import YourHelperClass
+   
+   # Example usage
+   helper = YourHelperClass(...)
+   result = helper.some_method(...)
+   ```
+   
+   ## API Reference
+   
+   ### `YourHelperClass`
+   
+   #### `__init__(param1, param2)`
+   
+   Description of initialization parameters.
+   
+   #### `some_method(param)`
+   
+   Description of method and its parameters.
+   ```
 
 8. **Update the README.md**:
    Add your new helper to the "Available Packages" section in the main README.md file.
@@ -184,3 +218,4 @@ cws-helpers @ git+https://github.com/caseywschmid/cws-helpers.git@v0.1.1
 7. **Document for end users** who will install with pip, not Poetry
 8. **Update version numbers** when adding new helpers or making significant changes
 9. **Maintain the changelog** to document all notable changes
+10. **Keep documentation with the code** by placing a README.md in your helper's directory

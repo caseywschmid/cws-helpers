@@ -1,7 +1,6 @@
 import logging
 import pytest
 import io
-import sys
 from cws_helpers.logger import (
     configure_logging,
     FINE_LEVEL,

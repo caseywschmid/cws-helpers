@@ -1,0 +1,39 @@
+{
+    // Use the Poetry virtual environment
+    "python.defaultInterpreterPath": "/Users/caseyschmid/Library/Caches/pypoetry/virtualenvs/cws-helpers-sKCvfNrO-py3.13/bin/python",
+    
+    // Configure Pylance to recognize pytest
+    "python.analysis.extraPaths": [
+        "/Users/caseyschmid/Library/Caches/pypoetry/virtualenvs/cws-helpers-sKCvfNrO-py3.13/lib/python3.13/site-packages",
+        "${workspaceFolder}/src"
+    ],
+    
+    // Auto-detect the Python interpreter
+    "python.terminal.activateEnvironment": true,
+    
+    // Disable the import warning for pytest and other modules
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none"
+    },
+    
+    // Additional helpful settings
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    
+    // Force Pylance to reload modules
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.indexing": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "pytest",
+            "depth": 10
+        }
+    ]
+} 
