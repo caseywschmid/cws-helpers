@@ -11,7 +11,26 @@ For detailed documentation on each package, please refer to the `/docs` director
 
 ## Installation
 
-This package uses Poetry for dependency management. To install:
+### For Users
+
+You can install this package directly from GitHub using pip without needing Poetry:
+
+```bash
+# Install the latest version
+pip install git+https://github.com/caseywschmid/cws-helpers.git
+
+# Install a specific version using a tag (once tags are available)
+pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+```
+
+For requirements.txt:
+```
+git+https://github.com/caseywschmid/cws-helpers.git
+```
+
+### For Developers
+
+This package uses Poetry for development and dependency management. To contribute or modify the package:
 
 ```bash
 # Clone the repository
@@ -44,12 +63,21 @@ cws-helpers/
 # Example using the logger package
 from cws_helpers.logger import configure_logging
 
+# Configure a logger for your module
 logger = configure_logging(
     logger_name="my_app",
     keep_logs=True
 )
 
+# Use standard log levels
+logger.debug("Debug message")
 logger.info("Application started")
+logger.warning("Warning message")
+logger.error("Error occurred")
+
+# Use custom log levels
+logger.fine("Fine-level details")
+logger.step("Starting important process")
 logger.success("Operation completed successfully!")
 ```
 

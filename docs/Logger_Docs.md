@@ -12,11 +12,11 @@ The `cws_helpers.logger` module provides an enhanced logging system with custom 
 
 ## Installation
 
-The logger is part of the cws-helpers package. You can install it using either Poetry or pip.
+The logger is part of the cws-helpers package. You can install it using pip without needing Poetry.
 
 ### Package Structure
 
-This project uses a `src` layout, which means the actual package code is in the `src/cws_helpers` directory. When you install the package (either via Poetry or pip), the package will be available as `cws_helpers` in your Python environment:
+The package uses a `src` layout, which means the actual package code is in the `src/cws_helpers` directory. When you install the package, the package will be available as `cws_helpers` in your Python environment:
 
 ```
 cws-helpers/
@@ -29,29 +29,16 @@ cws-helpers/
 └── ...
 ```
 
-### Using Poetry
+### For Users: Installing with pip
 
-```bash
-# If installing from a published package
-poetry add cws-helpers
-
-# If installing from your private Git repository
-poetry add git+https://github.com/caseywschmid/cws-helpers.git
-```
-
-### Using pip
-
-If you prefer using pip or are in an environment without Poetry, you can install directly from the Git repository:
+You can install directly from the GitHub repository:
 
 ```bash
 # Install the latest version
 pip install git+https://github.com/caseywschmid/cws-helpers.git
 
-# Install a specific version using a tag
+# Install a specific version using a tag (once tags are available)
 pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
-
-# Install in development mode (editable)
-pip install -e git+https://github.com/caseywschmid/cws-helpers.git#egg=cws-helpers
 ```
 
 ### For requirements.txt
@@ -62,8 +49,23 @@ If you need to include the package in a requirements.txt file:
 # For the latest version
 git+https://github.com/caseywschmid/cws-helpers.git
 
-# For a specific version
+# For a specific version (once tags are available)
 git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+```
+
+### For Developers: Using Poetry
+
+If you're contributing to the project or modifying the code, you'll need Poetry:
+
+```bash
+# Clone the repository
+git clone https://github.com/caseywschmid/cws-helpers.git
+
+# Navigate to the project directory
+cd cws-helpers
+
+# Install dependencies using Poetry
+poetry install
 ```
 
 ## Basic Usage
@@ -72,7 +74,6 @@ Here's how to use the logger in your Python modules:
 
 ```python
 from cws_helpers.logger import configure_logging
-import logging
 
 # Configure logging for this module
 log = configure_logging(__name__)
@@ -202,7 +203,6 @@ Here's a complete example showing how to use the logger in a project:
 ```python
 # myapp/utils.py
 from cws_helpers.logger import configure_logging
-import logging
 
 log = configure_logging(__name__)
 
