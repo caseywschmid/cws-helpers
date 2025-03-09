@@ -126,6 +126,53 @@ cws-helpers/
     git push
     ```
 
+## Versioning
+
+When adding a new helper or making significant changes, you should update the package version following semantic versioning principles:
+
+1. **Update the version number** in `src/cws_helpers/__init__.py`:
+   ```python
+   __version__ = "0.1.1"  # Increment appropriately
+   ```
+
+   - Increment PATCH (0.1.0 → 0.1.1) for bug fixes and minor changes
+   - Increment MINOR (0.1.0 → 0.2.0) for new features (like adding a new helper)
+   - Increment MAJOR (0.1.0 → 1.0.0) for breaking changes
+
+2. **Update the CHANGELOG.md** file:
+   ```markdown
+   ## [0.1.1] - YYYY-MM-DD
+   
+   ### Added
+   - New helper: your_new_helper for [brief description]
+   - Feature X to existing helper
+   
+   ### Changed
+   - Improved performance of feature Y
+   
+   ### Fixed
+   - Bug in feature Z
+   
+   [0.1.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.1.0...v0.1.1
+   ```
+
+   The changelog should include:
+   - The new version number and release date
+   - Sections for Added, Changed, Deprecated, Removed, Fixed, and Security
+   - Only include sections that have changes
+   - A comparison link at the bottom to see all changes between versions
+
+3. **Create a Git tag** for the new version:
+   ```bash
+   git tag -a v0.1.1 -m "Added new helper: your_new_helper"
+   git push origin v0.1.1
+   ```
+
+This versioning allows users to pin to specific versions in their requirements.txt:
+```
+cws-helpers @ git+https://github.com/caseywschmid/cws-helpers.git@v0.1.1
+```
+
 ## Best Practices
 
 1. **Follow PEP 8** for code style and formatting
@@ -135,3 +182,5 @@ cws-helpers/
 5. **Write thorough tests** covering normal usage and edge cases
 6. **Keep dependencies minimal** to avoid bloating the package
 7. **Document for end users** who will install with pip, not Poetry
+8. **Update version numbers** when adding new helpers or making significant changes
+9. **Maintain the changelog** to document all notable changes

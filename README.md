@@ -19,14 +19,44 @@ You can install this package directly from GitHub using pip without needing Poet
 # Install the latest version
 pip install git+https://github.com/caseywschmid/cws-helpers.git
 
-# Install a specific version using a tag (once tags are available)
+# Install a specific version using a tag
 pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
 ```
 
 For requirements.txt:
 ```
+# Always get the latest version
 git+https://github.com/caseywschmid/cws-helpers.git
+
+# Or pin to a specific version tag
+git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
 ```
+
+### Versioning and Updates
+
+This package uses semantic versioning (MAJOR.MINOR.PATCH):
+- MAJOR version for incompatible API changes
+- MINOR version for added functionality in a backward compatible manner
+- PATCH version for backward compatible bug fixes
+
+When you install the package, you can control how updates are handled:
+
+1. **Latest version** (will update when you run `pip install --upgrade`):
+   ```
+   pip install git+https://github.com/caseywschmid/cws-helpers.git
+   ```
+
+2. **Specific version tag** (stable, won't automatically update):
+   ```
+   pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+   ```
+
+3. **Specific commit** (exact version, won't automatically update):
+   ```
+   pip install git+https://github.com/caseywschmid/cws-helpers.git@8d3b355fd90b0f5326e21942790ba063fb77e9c9
+   ```
+
+Check the [releases page](https://github.com/caseywschmid/cws-helpers/releases) for the latest version information and the [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
 ### For Developers
 
