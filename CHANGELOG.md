@@ -5,6 +5,25 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-03-29
+
+### Added
+- YouTube Helper module with the following features:
+  - YoutubeHelper class for interacting with YouTube videos
+  - Video information extraction using yt-dlp
+  - URL validation and video ID extraction
+  - Caption/subtitle handling with multiple format support
+  - Comprehensive error handling with custom exceptions
+  - Pydantic models for type-safe data handling
+- Documentation for YouTube Helper:
+  - Detailed README.md in the helper's directory with usage instructions and examples
+  - Updated main README.md with YouTube Helper information
+- Tests for YouTube Helper:
+  - Unit tests for all YoutubeHelper methods
+
+### Changed
+- Updated project dependencies to include yt-dlp
+
 ## [0.3.0] - 2025-03-22
 
 ### Added
@@ -80,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.4.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/caseywschmid/cws-helpers/releases/tag/v0.1.0 

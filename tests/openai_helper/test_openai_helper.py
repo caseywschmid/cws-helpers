@@ -39,11 +39,19 @@ def test_init():
 # Test version check
 def test_version_check():
     """Test that the version check works correctly."""
+    # First, import the actual OPENAI_VERSION constant to ensure we mock a different version
+    from cws_helpers.openai_helper.openai_helper import OPENAI_VERSION
+    
+    # Create a custom version function for mocking
+    def mock_version_func(package_name):
+        if package_name == "openai":
+            return "0.0.1"  # Return a version different from OPENAI_VERSION
+        return "1.0.0"  # Default for other packages
+    
     with patch('cws_helpers.openai_helper.openai_helper.OpenAI'), \
-            patch('cws_helpers.openai_helper.openai_helper.version') as mock_version, \
-            patch('cws_helpers.openai_helper.openai_helper.log') as mock_log:
-        # Set up the mock to return a different version
-        mock_version.return_value = "1.0.0"
+            patch('cws_helpers.openai_helper.openai_helper.version', side_effect=mock_version_func), \
+            patch('cws_helpers.openai_helper.openai_helper.log') as mock_log, \
+            patch.dict(os.environ, {"MUTE_OPENAI_HELPER_WARNING": "False"}):
         
         # Initialize the helper, which should trigger the version check
         helper = OpenAIHelper(api_key="test_key", organization="test_org")

@@ -7,6 +7,7 @@ A collection of helper utilities for personal Python projects, providing enhance
 - **[Logger](src/cws_helpers/logger/README.md)**: Enhanced logging system with custom levels, colored output, and file logging capabilities
 - **[OpenAI Helper](src/cws_helpers/openai_helper/README.md)**: Simplified interface for interacting with OpenAI's API, supporting text completions, image inputs, JSON mode, and structured outputs
 - **[AWS Helper](src/cws_helpers/aws_helper/README.md)**: Type-safe interface for AWS S3 operations with comprehensive error handling and automatic pagination
+- **[YouTube Helper](src/cws_helpers/youtube_helper/README.md)**: Utilities for interacting with YouTube videos, extracting video information, validating URLs, and working with captions
 - *(More packages to be added)*
 
 Each helper includes its own documentation in its respective directory.
@@ -141,6 +142,21 @@ s3.put_object("path/to/file.json", data)
 content = s3.get_json("path/to/file.json")
 ```
 
+### YouTube Helper
+
+```python
+from cws_helpers import YoutubeHelper
+
+# Initialize the helper
+youtube = YoutubeHelper()
+
+# Check if a URL is a valid YouTube URL
+is_valid = youtube.is_valid_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+# Get detailed information about a video
+video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+```
+
 For detailed usage instructions and API documentation for each helper, see the README.md file in the helper's directory.
 
 ## Dependencies
@@ -150,6 +166,7 @@ For detailed usage instructions and API documentation for each helper, see the R
 - openai ^1.65.5
 - pydantic ^2.10.6
 - boto3 ^1.34.0
+- yt-dlp ^2023.11.16
 - pytest ^8.3.5 (dev dependency)
 - moto ^4.2.14 (dev dependency)
 

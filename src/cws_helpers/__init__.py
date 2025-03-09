@@ -1,8 +1,9 @@
 """CWS Helpers - Collection of utility helpers for personal projects."""
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 # For convenient imports
 from .logger import configure_logging
 from .openai_helper import OpenAIHelper
 from .aws_helper import S3Helper
+from .youtube_helper import YoutubeHelper, CaptionExtension
