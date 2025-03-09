@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cws-helpers"
-version = "0.1.0"
+version = "0.3.0"
 description = "Collection of helper utilities for personal projects"
 authors = ["Casey Schmid <caseywschmid@gmail.com>"]
 readme = "README.md"
@@ -11,10 +11,13 @@ python = "^3.9"
 python-dotenv = "^1.0.1"
 pydantic = "^2.10.6"
 openai = "1.65.5"
+boto3 = "^1.34.0"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
+moto = "5.1.1"
+pytest-cov = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]

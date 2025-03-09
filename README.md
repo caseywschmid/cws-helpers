@@ -6,6 +6,7 @@ A collection of helper utilities for personal Python projects, providing enhance
 
 - **[Logger](src/cws_helpers/logger/README.md)**: Enhanced logging system with custom levels, colored output, and file logging capabilities
 - **[OpenAI Helper](src/cws_helpers/openai_helper/README.md)**: Simplified interface for interacting with OpenAI's API, supporting text completions, image inputs, JSON mode, and structured outputs
+- **[AWS Helper](src/cws_helpers/aws_helper/README.md)**: Type-safe interface for AWS S3 operations with comprehensive error handling and automatic pagination
 - *(More packages to be added)*
 
 Each helper includes its own documentation in its respective directory.
@@ -124,6 +125,22 @@ response = helper.create_chat_completion(
 )
 ```
 
+### AWS Helper
+
+```python
+from cws_helpers import S3Helper
+
+# Initialize with bucket name (credentials from environment variables)
+s3 = S3Helper(bucket_name='my-bucket')
+
+# Store JSON data
+data = {"key": "value"}
+s3.put_object("path/to/file.json", data)
+
+# Read JSON data
+content = s3.get_json("path/to/file.json")
+```
+
 For detailed usage instructions and API documentation for each helper, see the README.md file in the helper's directory.
 
 ## Dependencies
@@ -132,7 +149,9 @@ For detailed usage instructions and API documentation for each helper, see the R
 - python-dotenv ^1.0.1
 - openai ^1.65.5
 - pydantic ^2.10.6
+- boto3 ^1.34.0
 - pytest ^8.3.5 (dev dependency)
+- moto ^4.2.14 (dev dependency)
 
 ## Development
 

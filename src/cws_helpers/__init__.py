@@ -5,3 +5,4 @@ __version__ = "0.2.0"
 # For convenient imports
 from .logger import configure_logging
 from .openai_helper import OpenAIHelper
+from .aws_helper import S3Helper
