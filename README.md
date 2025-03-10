@@ -8,6 +8,7 @@ A collection of helper utilities for personal Python projects, providing enhance
 - **[OpenAI Helper](src/cws_helpers/openai_helper/README.md)**: Simplified interface for interacting with OpenAI's API, supporting text completions, image inputs, JSON mode, and structured outputs
 - **[AWS Helper](src/cws_helpers/aws_helper/README.md)**: Type-safe interface for AWS S3 operations with comprehensive error handling and automatic pagination
 - **[YouTube Helper](src/cws_helpers/youtube_helper/README.md)**: Utilities for interacting with YouTube videos, extracting video information, validating URLs, and working with captions
+- **[Google Helper](src/cws_helpers/google_helper/README.md)**: Comprehensive helper for interacting with Google APIs including Sheets, Drive, and Docs with authentication handling
 - *(More packages to be added)*
 
 Each helper includes its own documentation in its respective directory.
@@ -157,6 +158,26 @@ is_valid = youtube.is_valid_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 ```
 
+### Google Helper
+
+```python
+from cws_helpers import GoogleHelper
+
+# Initialize with specific scopes
+google = GoogleHelper(scopes=['https://www.googleapis.com/auth/spreadsheets'])
+
+# Read data from a spreadsheet
+data = google.sheets.read_range(
+    spreadsheet_id='your_spreadsheet_id',
+    sheet_name='Sheet1',
+    start_cell='A1',
+    end_cell='D10'
+)
+
+# List files in Drive
+files = google.drive.list_files(query="name contains 'Report'")
+```
+
 For detailed usage instructions and API documentation for each helper, see the README.md file in the helper's directory.
 
 ## Dependencies
@@ -165,10 +186,14 @@ For detailed usage instructions and API documentation for each helper, see the R
 - python-dotenv ^1.0.1
 - openai ^1.65.5
 - pydantic ^2.10.6
-- boto3 ^1.34.0
-- yt-dlp ^2023.11.16
+- boto3 ^1.37.9
+- yt-dlp ^2025.2.19
+- google-auth ^2.32.0
+- google-auth-oauthlib ^1.2.0
+- google-auth-httplib2 ^0.2.0
+- google-api-python-client ^2.133.0
 - pytest ^8.3.5 (dev dependency)
-- moto ^4.2.14 (dev dependency)
+- moto ^5.1.1 (dev dependency)
 
 ## Development
 

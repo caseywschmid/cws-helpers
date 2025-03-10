@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cws-helpers"
-version = "0.4.0"
+version = "0.5.0"
 description = "Collection of helper utilities for personal projects"
 authors = ["Casey Schmid <caseywschmid@gmail.com>"]
 readme = "README.md"
@@ -13,6 +13,11 @@ pydantic = "^2.10.6"
 openai = "1.65.5"
 boto3 = "^1.37.9"
 yt-dlp = "^2025.2.19"
+google-api-python-client = "^2.163.0"
+google-auth = "^2.38.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.1"
+
 
 
 [tool.poetry.group.dev.dependencies]
