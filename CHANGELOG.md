@@ -5,6 +5,24 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-03-10
+
+### Added
+- Anthropic Helper module for interacting with Claude API:
+  - AnthropicHelper class for simplified Claude API interactions
+  - Support for all Claude models (3.7, 3.5, 3, and 2 series)
+  - Text message creation with system prompts
+  - Conversation history support
+  - Streaming responses
+  - Token counting
+  - Cost calculation with up-to-date pricing
+  - Prompt caching cost calculation
+  - Automatic retries with exponential backoff for rate limiting
+  - Automatic loading of API key from .env file with helpful error messages
+  - Comprehensive error handling and logging
+- Documentation for Anthropic Helper:
+  - Detailed README.md with usage examples and API reference
+
 ## [0.6.0] - 2025-04-12
 
 ### Added
