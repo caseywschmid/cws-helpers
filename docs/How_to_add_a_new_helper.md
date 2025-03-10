@@ -164,10 +164,23 @@ cws-helpers/
 
 When adding a new helper or making significant changes, you should update the package version following semantic versioning principles:
 
-1. **Update the version number** in `src/cws_helpers/__init__.py`:
+1. **Update the version number in BOTH locations**:
+   
+   a. In `pyproject.toml`:
+   ```toml
+   [tool.poetry]
+   name = "cws-helpers"
+   version = "0.1.1"  # Increment appropriately
+   ```
+   
+   b. In `src/cws_helpers/__init__.py`:
    ```python
    __version__ = "0.1.1"  # Increment appropriately
    ```
+
+   > **IMPORTANT**: Always ensure that the version numbers in `pyproject.toml` and `__init__.py` match exactly. 
+   > Poetry uses the version in `pyproject.toml` when building the package, while the version in `__init__.py` 
+   > is what's reported at runtime. Mismatched versions will cause confusion and installation issues.
 
    - Increment PATCH (0.1.0 → 0.1.1) for bug fixes and minor changes
    - Increment MINOR (0.1.0 → 0.2.0) for new features (like adding a new helper)
@@ -202,6 +215,15 @@ When adding a new helper or making significant changes, you should update the pa
    git push origin v0.1.1
    ```
 
+4. **Verify version consistency** before pushing:
+   ```bash
+   # Check version in pyproject.toml
+   grep "version" pyproject.toml
+   
+   # Check version in __init__.py
+   grep "__version__" src/cws_helpers/__init__.py
+   ```
+
 This versioning allows users to pin to specific versions in their requirements.txt:
 ```
 cws-helpers @ git+https://github.com/caseywschmid/cws-helpers.git@v0.1.1
@@ -216,6 +238,34 @@ cws-helpers @ git+https://github.com/caseywschmid/cws-helpers.git@v0.1.1
 5. **Write thorough tests** covering normal usage and edge cases
 6. **Keep dependencies minimal** to avoid bloating the package
 7. **Document for end users** who will install with pip, not Poetry
-8. **Update version numbers** when adding new helpers or making significant changes
-9. **Maintain the changelog** to document all notable changes
-10. **Keep documentation with the code** by placing a README.md in your helper's directory
+8. **Maintain version consistency** between `pyproject.toml` and `src/cws_helpers/__init__.py` to prevent installation issues
+9. **Update version numbers** when adding new helpers or making significant changes
+10. **Maintain the changelog** to document all notable changes
+11. **Keep documentation with the code** by placing a README.md in your helper's directory
+
+## Common Pitfalls to Avoid
+
+1. **Version Mismatch**: 
+   - **Problem**: Updating the version in `__init__.py` but forgetting to update it in `pyproject.toml` (or vice versa).
+   - **Impact**: Users will install a package with a different version than expected, leading to confusion and potential compatibility issues.
+   - **Solution**: Always update both files simultaneously and verify consistency before pushing changes.
+
+2. **Missing Dependencies**:
+   - **Problem**: Not adding new dependencies to `pyproject.toml`.
+   - **Impact**: Users will encounter import errors when trying to use your helper.
+   - **Solution**: Always use `poetry add` to add dependencies, which updates `pyproject.toml` automatically.
+
+3. **Insufficient Testing**:
+   - **Problem**: Not testing your helper with different Python versions or environments.
+   - **Impact**: Your helper might work on your machine but fail for others.
+   - **Solution**: Use pytest and test with multiple Python versions if possible.
+
+4. **Poor Error Handling**:
+   - **Problem**: Not providing clear error messages or handling edge cases.
+   - **Impact**: Users will struggle to understand why your helper isn't working.
+   - **Solution**: Include comprehensive error handling with descriptive error messages.
+
+5. **Inadequate Documentation**:
+   - **Problem**: Not documenting how to use your helper or its API.
+   - **Impact**: Users won't know how to use your helper effectively.
+   - **Solution**: Include a detailed README.md with examples and API documentation.
