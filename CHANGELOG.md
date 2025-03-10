@@ -5,6 +5,27 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-04-12
+
+### Added
+- PowerPath API Helper module with the following features:
+  - Complete interface for the PowerPath educational content management API
+  - PowerPathClient for making API requests with automatic error handling
+  - Pydantic models for all PowerPath resources (users, courses, modules, etc.)
+  - 53 API functions covering all available PowerPath endpoints (100% coverage)
+  - Comprehensive error handling with custom exceptions
+  - Default base URL configuration for simplified usage
+  - SQL query support for advanced data access
+- Documentation for PowerPath Helper:
+  - Detailed README.md with implementation status, usage examples, and API reference
+  - Updated main README.md with PowerPath Helper information
+- Tests for PowerPath Helper:
+  - Unit tests for all API functions and models
+  - 100% test coverage for all implemented endpoints
+
+### Changed
+- Updated project dependencies to include requests and pydantic
+
 ## [0.5.0] - 2025-04-05
 
 ### Added
@@ -118,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.6.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.2.0...v0.3.0

@@ -1,0 +1,325 @@
+[{
+        "table_name": "AssessmentResults",
+        "columns": [
+            "subject_name character varying",
+            "projected_growth real",
+            "observed_growth real",
+            "userUUID uuid",
+            "uuid uuid",
+            "term_name character varying",
+            "test_name character varying",
+            "score integer",
+            "percentile integer",
+            "test_date date",
+            "user_id integer",
+            "id integer"
+        ]
+    },
+    {
+        "table_name": "CFAssociations",
+        "columns": [
+            "destinationNodeURI uuid",
+            "originNodeURI uuid",
+            "associationType character varying",
+            "identifier uuid",
+            "CFDocumentURI text",
+            "lastChangeDateTime timestamp with time zone",
+            "sequenceNumber integer",
+            "uri text"
+        ]
+    },
+    {
+        "table_name": "CFDocuments",
+        "columns": [
+            "publisher character varying",
+            "caseVersion character varying",
+            "adoptionStatus character varying",
+            "language character varying",
+            "creator character varying",
+            "officialSourceURL text",
+            "uri text",
+            "notes text",
+            "description text",
+            "version text",
+            "subjectURI text",
+            "statusStartDate timestamp with time zone",
+            "statusEndDate timestamp with time zone",
+            "title character varying",
+            "identifier uuid",
+            "lastChangeDateTime timestamp with time zone",
+            "subject json"
+        ]
+    },
+    {
+        "table_name": "CFItems",
+        "columns": [
+            "listEnumeration character varying",
+            "statusEndDate timestamp with time zone",
+            "statusStartDate timestamp with time zone",
+            "identifier uuid",
+            "uri text",
+            "documentId uuid",
+            "CFItemType character varying",
+            "educationLevel json",
+            "CFItemTypeURI json",
+            "notes text",
+            "humanCodingScheme character varying",
+            "alternativeLabel text",
+            "fullStatement text",
+            "language character varying",
+            "lastChangeDateTime timestamp with time zone",
+            "extensions json",
+            "abbreviatedStatement text"
+        ]
+    },
+    {
+        "table_name": "ccItem",
+        "columns": [
+            "id integer",
+            "material text",
+            "grade integer",
+            "uuid uuid",
+            "difficulty integer",
+            "referenceText text",
+            "explanation text",
+            "metadata json"
+        ]
+    },
+    {
+        "table_name": "ccItemObjectBank",
+        "columns": [
+            "ccItemId integer",
+            "ccItemUUID uuid",
+            "objectBankUUID uuid",
+            "objectBankId integer"
+        ]
+    },
+    {
+        "table_name": "ccItemResults",
+        "columns": [
+            "createdAt timestamp with time zone",
+            "ccItemUUID uuid",
+            "resultUUID uuid",
+            "userId integer",
+            "response text",
+            "responseId integer",
+            "ccItemId integer",
+            "resultId integer",
+            "isCorrect boolean"
+        ]
+    },
+    {
+        "table_name": "courses",
+        "columns": [
+            "dateLastModified timestamp with time zone",
+            "status text",
+            "metadata text",
+            "title text",
+            "schoolYear text",
+            "courseCode text",
+            "grades text",
+            "subjects text",
+            "subjectCodes text",
+            "defaultModuleId integer",
+            "id integer",
+            "isPlacementTest boolean",
+            "uuid uuid",
+            "defaultModuleUUID uuid",
+            "appName character varying"
+        ]
+    },
+    {
+        "table_name": "enrollment",
+        "columns": [
+            "school text",
+            "role text",
+            "primary text",
+            "endDate date",
+            "id integer",
+            "dateLastModified timestamp with time zone",
+            "beginDate date",
+            "courseUUID uuid",
+            "uuid uuid",
+            "courseId integer",
+            "status text",
+            "metadata text",
+            "userId integer",
+            "userIdUUID uuid"
+        ]
+    },
+    {
+        "table_name": "goals",
+        "columns": [
+            "cutoffDate timestamp with time zone",
+            "dailyOverride integer",
+            "updatedAt timestamp with time zone",
+            "createdAt timestamp with time zone",
+            "id integer",
+            "description text",
+            "xp integer",
+            "courseId integer",
+            "userId integer"
+        ]
+    },
+    {
+        "table_name": "gradeLevelTests",
+        "columns": ["id integer", "itemId integer", "courseId integer"]
+    },
+    {
+        "table_name": "itemAssociations",
+        "columns": [
+            "moduleId integer",
+            "originItemUUID uuid",
+            "relationship character varying",
+            "destinationItemUUID uuid",
+            "originItemId integer",
+            "destinationItemId integer"
+        ]
+    },
+    {
+        "table_name": "items",
+        "columns": [
+            "metadata text",
+            "attempts integer",
+            "xp integer",
+            "contentType text",
+            "uuid uuid",
+            "isPlacementTest boolean",
+            "thirdPartyId character varying",
+            "name text",
+            "lti_url character varying",
+            "id integer",
+            "state character varying"
+        ]
+    },
+    {
+        "table_name": "moduleAssociations",
+        "columns": [
+            "originModuleUUID uuid",
+            "destinationModuleId integer",
+            "originModuleId integer",
+            "relationship character varying",
+            "destinationModuleUUID uuid"
+        ]
+    },
+    {
+        "table_name": "moduleItems",
+        "columns": [
+            "originModuleUUID uuid",
+            "originModuleId integer",
+            "originItemId integer",
+            "originItemUUID uuid"
+        ]
+    },
+    {
+        "table_name": "modules",
+        "columns": [
+            "name character varying",
+            "unlock_at timestamp with time zone",
+            "id integer",
+            "state character varying",
+            "startingItemUUID uuid",
+            "uuid uuid",
+            "startingModuleId integer",
+            "startingItemId integer"
+        ]
+    },
+    {
+        "table_name": "objectBank",
+        "columns": ["id integer", "uuid uuid", "itemUUID uuid", "itemId integer"]
+    },
+    {
+        "table_name": "response",
+        "columns": [
+            "explanation text",
+            "id integer",
+            "ccItemId integer",
+            "isCorrect boolean",
+            "label text"
+        ]
+    },
+    {
+        "table_name": "results",
+        "columns": [
+            "id integer",
+            "userId integer",
+            "achievedLevel text",
+            "alignments text",
+            "type text",
+            "value real",
+            "status text",
+            "resultDescription text",
+            "uuid uuid"
+        ]
+    },
+    {
+        "table_name": "userModuleItems",
+        "columns": [
+            "attempt integer",
+            "userUUID uuid",
+            "itemUUID uuid",
+            "clrResultUUID uuid",
+            "itemId integer",
+            "completedAt timestamp with time zone",
+            "startedAt timestamp with time zone",
+            "clrResultId integer",
+            "userId integer"
+        ]
+    },
+    {
+        "table_name": "userModuleSequence",
+        "columns": [
+            "id integer",
+            "originModuleId integer",
+            "insertedModuleUUID uuid",
+            "destinationModuleUUID uuid",
+            "insertedModuleId integer",
+            "originModuleUUID uuid",
+            "userUUID uuid",
+            "userId integer",
+            "destinationModuleId integer"
+        ]
+    },
+    {
+        "table_name": "users",
+        "columns": [
+            "pronouns text",
+            "dateLastModified timestamp with time zone",
+            "id integer",
+            "grades text",
+            "agents text",
+            "phone text",
+            "sms text",
+            "email text",
+            "mathacademyId integer",
+            "preferredLastName text",
+            "preferredMiddleName text",
+            "preferredFirstName text",
+            "middleName text",
+            "uuid uuid",
+            "familyName text",
+            "givenName text",
+            "username text",
+            "metadata text",
+            "status text",
+            "avatar json",
+            "readingLevel integer"
+        ]
+    },
+    {
+        "table_name": "xp",
+        "columns": [
+            "uuid uuid",
+            "userId integer",
+            "courseCode character varying",
+            "appName character varying",
+            "awardedOn timestamp with time zone",
+            "item_id integer",
+            "course_id integer",
+            "amount integer",
+            "id integer",
+            "subject character varying",
+            "user_uuid uuid"
+        ]
+    }
+]

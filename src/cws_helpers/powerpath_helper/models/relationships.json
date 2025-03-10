@@ -1,0 +1,260 @@
+[{
+        "constraint_name": "assessmentresults_user_id_foreign",
+        "table_name": "AssessmentResults",
+        "column_name": "user_id",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "cfitems_documentid_foreign",
+        "table_name": "CFItems",
+        "column_name": "documentId",
+        "foreign_table_name": "CFDocuments",
+        "foreign_column_name": "identifier"
+    },
+    {
+        "constraint_name": "ccitemobjectbank_ccitemid_foreign",
+        "table_name": "ccItemObjectBank",
+        "column_name": "ccItemId",
+        "foreign_table_name": "ccItem",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "ccitemobjectbank_objectbankid_foreign",
+        "table_name": "ccItemObjectBank",
+        "column_name": "objectBankId",
+        "foreign_table_name": "objectBank",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "ccitemresults_ccitemid_foreign",
+        "table_name": "ccItemResults",
+        "column_name": "ccItemId",
+        "foreign_table_name": "ccItem",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "ccitemresults_responseid_foreign",
+        "table_name": "ccItemResults",
+        "column_name": "responseId",
+        "foreign_table_name": "response",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "ccitemresults_resultid_foreign",
+        "table_name": "ccItemResults",
+        "column_name": "resultId",
+        "foreign_table_name": "results",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "ccitemresults_userid_foreign",
+        "table_name": "ccItemResults",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "courses_defaultmoduleid_foreign",
+        "table_name": "courses",
+        "column_name": "defaultModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "enrollment_courseid_foreign",
+        "table_name": "enrollment",
+        "column_name": "courseId",
+        "foreign_table_name": "courses",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "enrollment_userid_foreign",
+        "table_name": "enrollment",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "goals_courseid_foreign",
+        "table_name": "goals",
+        "column_name": "courseId",
+        "foreign_table_name": "courses",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "goals_userid_foreign",
+        "table_name": "goals",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "gradeleveltests_courseid_foreign",
+        "table_name": "gradeLevelTests",
+        "column_name": "courseId",
+        "foreign_table_name": "courses",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "gradeleveltests_itemid_foreign",
+        "table_name": "gradeLevelTests",
+        "column_name": "itemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "itemassociations_destinationitemid_foreign",
+        "table_name": "itemAssociations",
+        "column_name": "destinationItemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "itemassociations_originitemid_foreign",
+        "table_name": "itemAssociations",
+        "column_name": "originItemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "itemassociations_moduleid_foreign",
+        "table_name": "itemAssociations",
+        "column_name": "moduleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "moduleassociations_destinationmoduleid_foreign",
+        "table_name": "moduleAssociations",
+        "column_name": "destinationModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "moduleassociations_originmoduleid_foreign",
+        "table_name": "moduleAssociations",
+        "column_name": "originModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "moduleitems_originitemid_foreign",
+        "table_name": "moduleItems",
+        "column_name": "originItemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "moduleitems_originmoduleid_foreign",
+        "table_name": "moduleItems",
+        "column_name": "originModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "modules_startingitemid_foreign",
+        "table_name": "modules",
+        "column_name": "startingItemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "modules_startingmoduleid_foreign",
+        "table_name": "modules",
+        "column_name": "startingModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "objectbank_itemid_foreign",
+        "table_name": "objectBank",
+        "column_name": "itemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "response_ccitemid_foreign",
+        "table_name": "response",
+        "column_name": "ccItemId",
+        "foreign_table_name": "ccItem",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "results_userid_foreign",
+        "table_name": "results",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermoduleitems_itemid_foreign",
+        "table_name": "userModuleItems",
+        "column_name": "itemId",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermoduleitems_clrresultid_foreign",
+        "table_name": "userModuleItems",
+        "column_name": "clrResultId",
+        "foreign_table_name": "results",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermoduleitems_userid_foreign",
+        "table_name": "userModuleItems",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermodulesequence_destinationmoduleid_foreign",
+        "table_name": "userModuleSequence",
+        "column_name": "destinationModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermodulesequence_insertedmoduleid_foreign",
+        "table_name": "userModuleSequence",
+        "column_name": "insertedModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermodulesequence_originmoduleid_foreign",
+        "table_name": "userModuleSequence",
+        "column_name": "originModuleId",
+        "foreign_table_name": "modules",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "usermodulesequence_userid_foreign",
+        "table_name": "userModuleSequence",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "xp_course_id_foreign",
+        "table_name": "xp",
+        "column_name": "course_id",
+        "foreign_table_name": "courses",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "xp_item_id_foreign",
+        "table_name": "xp",
+        "column_name": "item_id",
+        "foreign_table_name": "items",
+        "foreign_column_name": "id"
+    },
+    {
+        "constraint_name": "xp_userid_foreign",
+        "table_name": "xp",
+        "column_name": "userId",
+        "foreign_table_name": "users",
+        "foreign_column_name": "id"
+    }
+]

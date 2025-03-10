@@ -9,6 +9,7 @@ A collection of helper utilities for personal Python projects, providing enhance
 - **[AWS Helper](src/cws_helpers/aws_helper/README.md)**: Type-safe interface for AWS S3 operations with comprehensive error handling and automatic pagination
 - **[YouTube Helper](src/cws_helpers/youtube_helper/README.md)**: Utilities for interacting with YouTube videos, extracting video information, validating URLs, and working with captions
 - **[Google Helper](src/cws_helpers/google_helper/README.md)**: Comprehensive helper for interacting with Google APIs including Sheets, Drive, and Docs with authentication handling
+- **[PowerPath Helper](src/cws_helpers/powerpath_helper/README.md)**: Complete interface for the PowerPath API with models, clients, and utility functions for educational content management
 - *(More packages to be added)*
 
 Each helper includes its own documentation in its respective directory.
@@ -176,6 +177,23 @@ data = google.sheets.read_range(
 
 # List files in Drive
 files = google.drive.list_files(query="name contains 'Report'")
+```
+
+### PowerPath Helper
+
+```python
+from cws_helpers.powerpath_helper import PowerPathClient, get_all_courses, get_user
+
+# Initialize the client (base URL is set by default)
+client = PowerPathClient()
+
+# Get all courses
+courses = get_all_courses(client)
+print(f"Found {len(courses)} courses")
+
+# Get a specific user
+user = get_user(client, "123")
+print(f"User: {user.given_name} {user.family_name}")
 ```
 
 For detailed usage instructions and API documentation for each helper, see the README.md file in the helper's directory.
