@@ -244,11 +244,12 @@ def test_list_available_captions_with_auto_prefix(youtube_helper, mock_caption_d
         
         # Verify caption formats are preserved
         if 'auto-en' in captions:
-            assert any(ext in [CaptionExtension.VTT, CaptionExtension.JSON3] for ext in captions['auto-en'])
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['auto-en'])
+            assert any(caption.ext == CaptionExtension.JSON3 for caption in captions['auto-en'])
         if 'auto-es' in captions:
-            assert CaptionExtension.VTT in captions['auto-es']
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['auto-es'])
         if 'fr' in captions:
-            assert CaptionExtension.VTT in captions['fr']
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['fr'])
 
 def test_list_available_captions_preferred_only(youtube_helper, mock_caption_data):
     """Test that list_available_captions returns only preferred captions by default."""
@@ -257,7 +258,7 @@ def test_list_available_captions_preferred_only(youtube_helper, mock_caption_dat
         # Mock the _extract_captions method to return a known set of preferred captions
         preferred_captions = {
             'en': [
-                MagicMock(ext=CaptionExtension.VTT, name='English')
+                YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/en.vtt", name='English')
             ]
         }
         with patch.object(youtube_helper, '_extract_captions', return_value=preferred_captions):
@@ -266,7 +267,7 @@ def test_list_available_captions_preferred_only(youtube_helper, mock_caption_dat
             
             # Verify only preferred captions are returned
             assert 'en' in captions
-            assert CaptionExtension.VTT in captions['en']
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['en'])
             
             # Verify non-preferred captions are not included
             assert 'auto-en' not in captions
@@ -281,13 +282,33 @@ def test_list_available_captions_parameter_behavior(youtube_helper, mock_caption
     """Test that the return_all_captions parameter correctly controls the behavior."""
     # Mock the extract_info method to return our mock data
     with patch.object(yt_dlp.YoutubeDL, 'extract_info', return_value=mock_caption_data):
-        # Mock the _extract_captions method to return a known set of preferred captions
-        preferred_captions = {
-            'en': [
-                MagicMock(ext=CaptionExtension.VTT, name='English')
-            ]
-        }
-        with patch.object(youtube_helper, '_extract_captions', return_value=preferred_captions):
+        # Create a side effect function that returns different values based on the context
+        def extract_captions_side_effect(result):
+            # For the first call (preferred captions)
+            if not hasattr(extract_captions_side_effect, 'called'):
+                extract_captions_side_effect.called = True
+                return {
+                    'en': [
+                        YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/en.vtt", name='English')
+                    ]
+                }
+            # For the second call (all captions)
+            else:
+                return {
+                    'en': [
+                        YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/en.vtt", name='English'),
+                        YTDLPCaption(ext=CaptionExtension.JSON3, url="https://example.com/en.json3", name='English')
+                    ],
+                    'auto-en': [
+                        YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/auto-en.vtt", name='Auto English')
+                    ],
+                    'es': [
+                        YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/es.vtt", name='Spanish')
+                    ]
+                }
+        
+        # Mock _extract_captions with our side effect function
+        with patch.object(youtube_helper, '_extract_captions', side_effect=extract_captions_side_effect):
             # Call with return_all_captions=False (default)
             preferred_only = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL)
             
@@ -327,7 +348,7 @@ def test_list_available_captions_no_auto_captions(youtube_helper):
         # Mock the _extract_captions method to return only English subtitles
         preferred_captions = {
             'en': [
-                MagicMock(ext=CaptionExtension.VTT, name='English')
+                YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/en.vtt", name='English')
             ]
         }
         with patch.object(youtube_helper, '_extract_captions', return_value=preferred_captions):
@@ -339,7 +360,7 @@ def test_list_available_captions_no_auto_captions(youtube_helper):
             
             # Verify regular subtitles are present
             assert 'en' in captions
-            assert CaptionExtension.VTT in captions['en']
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['en'])
             
             # Call with return_all_captions=True
             all_captions = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL, return_all_captions=True)
@@ -349,7 +370,7 @@ def test_list_available_captions_no_auto_captions(youtube_helper):
             
             # Verify regular subtitles are present in all captions
             assert 'en' in all_captions
-            assert CaptionExtension.VTT in all_captions['en']
+            assert any(caption.ext == CaptionExtension.VTT for caption in all_captions['en'])
 
 def test_list_available_captions_no_subtitles(youtube_helper):
     """Test list_available_captions when no subtitles are available."""
@@ -375,7 +396,7 @@ def test_list_available_captions_no_subtitles(youtube_helper):
         # In this case, we'll return auto-en captions as preferred
         preferred_captions = {
             'auto-en': [
-                MagicMock(ext=CaptionExtension.VTT, name='English')
+                YTDLPCaption(ext=CaptionExtension.VTT, url="https://example.com/auto-en.vtt", name='English')
             ]
         }
         with patch.object(youtube_helper, '_extract_captions', return_value=preferred_captions):
@@ -384,7 +405,7 @@ def test_list_available_captions_no_subtitles(youtube_helper):
             
             # Verify automatic captions are present and prefixed
             assert 'auto-en' in captions
-            assert CaptionExtension.VTT in captions['auto-en']
+            assert any(caption.ext == CaptionExtension.VTT for caption in captions['auto-en'])
             
             # Verify no regular subtitles are present
             assert not any(not lang.startswith('auto-') for lang in captions.keys())
@@ -394,7 +415,7 @@ def test_list_available_captions_no_subtitles(youtube_helper):
             
             # Verify automatic captions are present in all captions
             assert 'auto-en' in all_captions
-            assert CaptionExtension.VTT in all_captions['auto-en']
+            assert any(caption.ext == CaptionExtension.VTT for caption in all_captions['auto-en'])
 
 # ---------------------------- Caption Format Handling Tests ---------------------------- #
 

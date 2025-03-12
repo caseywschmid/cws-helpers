@@ -2,8 +2,11 @@
 
 A collection of helper utilities for personal Python projects, providing enhanced functionality and convenience features.
 
-## Latest Updates (v0.7.2)
+## Latest Updates (v0.7.4)
 
+- **Enhanced YouTube Caption Access**: `list_available_captions` now returns full caption objects with URLs for direct download
+- **Enhanced YouTube Caption Filtering**: Added `return_all_captions` parameter to `list_available_captions` method for better control over caption results
+- **Improved Caption Handling**: Now returns preferred captions by default with option to get all available captions
 - **Enhanced YouTube Caption Handling**: Improved caption extraction and processing with better support for automatic captions and multiple languages
 - **New Example Scripts**: Added comprehensive examples demonstrating the improved functionality
 - See the [CHANGELOG.md](CHANGELOG.md) for detailed release notes
@@ -32,7 +35,7 @@ You can install this package directly from GitHub using pip without needing Poet
 pip install git+https://github.com/caseywschmid/cws-helpers.git
 
 # Install a specific version using a tag
-pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
+pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.4
 ```
 
 For requirements.txt:
@@ -41,7 +44,7 @@ For requirements.txt:
 git+https://github.com/caseywschmid/cws-helpers.git
 
 # Or pin to a specific version tag
-git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
+git+https://github.com/caseywschmid/cws-helpers.git@v0.7.4
 ```
 
 ### Versioning and Updates
@@ -60,7 +63,7 @@ When you install the package, you can control how updates are handled:
 
 2. **Specific version tag** (stable, won't automatically update):
    ```
-   pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
+   pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.4
    ```
 
 3. **Specific commit** (exact version, won't automatically update):

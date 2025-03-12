@@ -366,49 +366,92 @@ class YoutubeHelper():
             result (Dict[str, Any]): The raw result dictionary from yt-dlp.
 
         Returns:
-            Dict[str, List[YoutubeCaption]]: A dictionary mapping language codes to lists of caption formats.
+            Dict[str, List[YTDLPCaption]]: A dictionary mapping language codes to lists of caption formats.
+            Automatic captions are prefixed with 'auto-' in the language code.
         """
         log.fine("[YoutubeHelper._extract_captions()]")
         captions: Dict[str, List[YTDLPCaption]] = {}
-
-        # Try automatic captions first
-        automatic_captions = result.get("automatic_captions", {})
-        regular_captions = result.get("subtitles", {})
 
         # Define caption format preferences with language names
         caption_preferences = [
             ("en-orig", CAPTION_FORMATS, "English (Original)"),
             ("en", CAPTION_FORMATS, "English"),
         ]
-
-        # Try both automatic and regular captions
-        for captions_dict in [automatic_captions, regular_captions]:
-            for lang_code, formats, lang_name in caption_preferences:
-                caption_set = captions_dict.get(lang_code, [])
-                current_captions: List[YTDLPCaption] = []
+        
+        # Process automatic captions
+        automatic_captions = result.get("automatic_captions", {})
+        for lang_code, caption_set in automatic_captions.items():
+            # Create a key with 'auto-' prefix to distinguish automatic captions
+            auto_lang_code = f"auto-{lang_code}"
+            current_captions: List[YTDLPCaption] = []
+            
+            for caption in caption_set:
+                caption_ext = caption.get("ext")
+                caption_protocol = caption.get("protocol")
                 
-                for caption in caption_set:
-                    caption_ext = caption.get("ext")
-                    caption_protocol = caption.get("protocol")
-                    
-                    # Try to convert the extension to our enum
-                    try:
-                        ext = CaptionExtension(caption_ext) if caption_ext else None
-                    except ValueError:
-                        # Skip if the extension is not in our supported formats
-                        continue
+                # Try to convert the extension to our enum
+                try:
+                    ext = CaptionExtension(caption_ext) if caption_ext else None
+                except ValueError:
+                    # Skip if the extension is not in our supported formats
+                    continue
 
-                    if ext in formats or caption_protocol in [f.value for f in formats]:
-                        caption_info = YTDLPCaption(
-                            ext=ext,
-                            url=caption.get("url"),
-                            name=caption.get("name", lang_name)
-                        )
-                        current_captions.append(caption_info)
-                        # Found a matching caption, no need to check other formats
+                # Check if this is a preferred language and format
+                is_preferred = False
+                for pref_lang, pref_formats, lang_name in caption_preferences:
+                    if lang_code == pref_lang and (ext in pref_formats or caption_protocol in [f.value for f in pref_formats]):
+                        is_preferred = True
                         break
                 
-                if current_captions:
+                # Include the caption if it's in a supported format
+                if ext:
+                    caption_info = YTDLPCaption(
+                        ext=ext,
+                        url=caption.get("url"),
+                        name=caption.get("name", f"Auto {lang_code}")
+                    )
+                    current_captions.append(caption_info)
+            
+            if current_captions:
+                captions[auto_lang_code] = current_captions
+        
+        # Process regular captions
+        regular_captions = result.get("subtitles", {})
+        for lang_code, caption_set in regular_captions.items():
+            current_captions: List[YTDLPCaption] = []
+            
+            for caption in caption_set:
+                caption_ext = caption.get("ext")
+                caption_protocol = caption.get("protocol")
+                
+                # Try to convert the extension to our enum
+                try:
+                    ext = CaptionExtension(caption_ext) if caption_ext else None
+                except ValueError:
+                    # Skip if the extension is not in our supported formats
+                    continue
+
+                # Check if this is a preferred language and format
+                is_preferred = False
+                for pref_lang, pref_formats, lang_name in caption_preferences:
+                    if lang_code == pref_lang and (ext in pref_formats or caption_protocol in [f.value for f in pref_formats]):
+                        is_preferred = True
+                        break
+                
+                # Include the caption if it's in a supported format
+                if ext:
+                    caption_info = YTDLPCaption(
+                        ext=ext,
+                        url=caption.get("url"),
+                        name=caption.get("name", lang_code)
+                    )
+                    current_captions.append(caption_info)
+            
+            if current_captions:
+                # If we already have automatic captions for this language, keep them separate
+                if lang_code in captions:
+                    captions[lang_code].extend(current_captions)
+                else:
                     captions[lang_code] = current_captions
 
         return captions
@@ -509,7 +552,7 @@ class YoutubeHelper():
             log.error(f"Error extracting video ID from URL {url}: {str(e)}")
             return None
 
-    def list_available_captions(self, url: str, return_all_captions: bool = False) -> Dict[str, List[CaptionExtension]]:
+    def list_available_captions(self, url: str, return_all_captions: bool = False) -> Dict[str, List[YTDLPCaption]]:
         """
         List available captions for a YouTube video.
         
@@ -522,12 +565,17 @@ class YoutubeHelper():
                                        Default is False (only preferred captions).
 
         Returns:
-            Dict[str, List[CaptionExtension]]: A dictionary mapping language codes to lists of available caption formats.
+            Dict[str, List[YTDLPCaption]]: A dictionary mapping language codes to lists of available caption objects.
             Example:
             ```
             {
-                'en': [CaptionExtension.VTT, CaptionExtension.SRV1],
-                'es': [CaptionExtension.VTT]
+                'en': [
+                    YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='English'),
+                    YTDLPCaption(ext=CaptionExtension.JSON3, url='https://www.youtube.com/api/timedtext?...', name='English')
+                ],
+                'es': [
+                    YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='Spanish')
+                ]
             }
             ```
         """
@@ -555,99 +603,35 @@ class YoutubeHelper():
                         log.warning(f"No video information returned for {url}")
                         return {}
                     
-                    # Get the preferred captions using _extract_captions
-                    preferred_captions = self._extract_captions(result)
+                    # Get all captions using _extract_captions
+                    all_captions = self._extract_captions(result)
                     
-                    # If we only want preferred captions, convert them to the expected return format and return
+                    # If we only want preferred captions, filter the results
                     if not return_all_captions:
-                        preferred_result: Dict[str, List[CaptionExtension]] = {}
+                        # Define preferred languages
+                        preferred_languages = ["en-orig", "en", "auto-en", "auto-en-orig"]
                         
-                        for lang_code, captions in preferred_captions.items():
-                            if lang_code not in preferred_result:
-                                preferred_result[lang_code] = []
-                            
-                            for caption in captions:
-                                ext = getattr(caption, 'ext', None)
-                                if ext and ext not in preferred_result[lang_code]:
-                                    preferred_result[lang_code].append(ext)
+                        # Filter to only include preferred languages
+                        preferred_captions = {
+                            lang: captions for lang, captions in all_captions.items()
+                            if lang in preferred_languages
+                        }
                         
-                        if preferred_result:
-                            log.debug(f"Found preferred captions for video {url}: {preferred_result}")
+                        # Log the result for debugging
+                        if preferred_captions:
+                            log.debug(f"Found preferred captions for video {url}: {preferred_captions}")
                         else:
                             log.info(f"No preferred captions found for video {url}")
                         
-                        return preferred_result
+                        return preferred_captions
                     
-                    # If we want all captions, process them
-                    result_all_captions: Dict[str, List[CaptionExtension]] = {}
-                    
-                    # Process automatic captions
-                    auto_captions = result.get("automatic_captions", {})
-                    if auto_captions:
-                        for lang_code, captions in auto_captions.items():
-                            # Add 'auto-' prefix to distinguish automatic captions
-                            auto_lang_code = f"auto-{lang_code}"
-                            if auto_lang_code not in result_all_captions:
-                                result_all_captions[auto_lang_code] = []
-                            
-                            for caption in captions:
-                                caption_ext = caption.get("ext")
-                                # Try to convert the extension to our enum
-                                try:
-                                    ext = CaptionExtension(caption_ext) if caption_ext else None
-                                    if ext and ext not in result_all_captions[auto_lang_code]:
-                                        result_all_captions[auto_lang_code].append(ext)
-                                except ValueError:
-                                    # Skip if the extension is not in our supported formats
-                                    continue
-                    
-                    # Process regular subtitles
-                    subtitles = result.get("subtitles", {})
-                    if subtitles:
-                        for lang_code, captions in subtitles.items():
-                            if lang_code not in result_all_captions:
-                                result_all_captions[lang_code] = []
-                            
-                            for caption in captions:
-                                caption_ext = caption.get("ext")
-                                # Try to convert the extension to our enum
-                                try:
-                                    ext = CaptionExtension(caption_ext) if caption_ext else None
-                                    if ext and ext not in result_all_captions[lang_code]:
-                                        result_all_captions[lang_code].append(ext)
-                                except ValueError:
-                                    # Skip if the extension is not in our supported formats
-                                    continue
-                    
-                    # Merge preferred captions with all captions, prioritizing preferred ones
-                    final_result: Dict[str, List[CaptionExtension]] = {}
-                    
-                    # First add preferred captions
-                    for lang_code, captions in preferred_captions.items():
-                        if lang_code not in final_result:
-                            final_result[lang_code] = []
-                        
-                        for caption in captions:
-                            ext = getattr(caption, 'ext', None)
-                            if ext and ext not in final_result[lang_code]:
-                                final_result[lang_code].append(ext)
-                    
-                    # Then add all other captions
-                    for lang_code, extensions in result_all_captions.items():
-                        if lang_code not in final_result:
-                            final_result[lang_code] = []
-                        
-                        for ext in extensions:
-                            if ext not in final_result[lang_code]:
-                                final_result[lang_code].append(ext)
-                    
-                    # Log the result for debugging
-                    if final_result:
-                        log.debug(f"Found all captions for video {url}: {final_result}")
+                    # Return all captions
+                    if all_captions:
+                        log.debug(f"Found all captions for video {url}: {all_captions}")
                     else:
                         log.info(f"No captions found for video {url}")
                     
-                    return final_result
+                    return all_captions
                     
                 except yt_dlp.utils.DownloadError as e:
                     error_message = str(e)

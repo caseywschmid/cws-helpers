@@ -51,7 +51,10 @@ preferred_captions = youtube.list_available_captions("https://www.youtube.com/wa
 
 # Example output (only preferred captions):
 # {
-#     'en': [CaptionExtension.VTT, CaptionExtension.JSON3]
+#     'en': [
+#         YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='English'),
+#         YTDLPCaption(ext=CaptionExtension.JSON3, url='https://www.youtube.com/api/timedtext?...', name='English')
+#     ]
 # }
 
 # Get all available captions
@@ -59,17 +62,35 @@ all_captions = youtube.list_available_captions("https://www.youtube.com/watch?v=
 
 # Example output (all captions):
 # {
-#     'auto-en': [CaptionExtension.VTT, CaptionExtension.JSON3, CaptionExtension.SRV1],
-#     'en': [CaptionExtension.VTT, CaptionExtension.JSON3, CaptionExtension.SRV1],
-#     'es': [CaptionExtension.VTT],
-#     'fr': [CaptionExtension.VTT]
+#     'auto-en': [
+#         YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='English'),
+#         YTDLPCaption(ext=CaptionExtension.JSON3, url='https://www.youtube.com/api/timedtext?...', name='English')
+#     ],
+#     'en': [
+#         YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='English'),
+#         YTDLPCaption(ext=CaptionExtension.JSON3, url='https://www.youtube.com/api/timedtext?...', name='English')
+#     ],
+#     'es': [
+#         YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='Spanish')
+#     ],
+#     'fr': [
+#         YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='French')
+#     ]
 # }
 
 # Note: Automatic captions are prefixed with 'auto-'
 
 # Check if a specific language and format is available
-has_english_vtt = CaptionExtension.VTT in preferred_captions.get('en', [])
+has_english_vtt = any(caption.ext == CaptionExtension.VTT for caption in preferred_captions.get('en', []))
 has_auto_english = 'auto-en' in preferred_captions
+
+# Access caption URLs directly
+if 'en' in preferred_captions:
+    for caption in preferred_captions['en']:
+        if caption.ext == CaptionExtension.VTT:
+            vtt_url = caption.url
+            print(f"English VTT caption URL: {vtt_url}")
+            # You can now download the caption using this URL
 
 # Access caption data from video_info
 video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -181,7 +202,7 @@ Get detailed information about a YouTube video.
   - `YouTubeVideoUnavailable`: If the video is not available.
   - `YTOAuthTokenExpired`: If the OAuth token has expired.
 
-#### `list_available_captions(url: str, return_all_captions: bool = False) -> Dict[str, List[CaptionExtension]]`
+#### `list_available_captions(url: str, return_all_captions: bool = False) -> Dict[str, List[YTDLPCaption]]`
 
 List available captions for a YouTube video.
 
@@ -189,95 +210,25 @@ List available captions for a YouTube video.
   - `url` (str): The YouTube URL.
   - `return_all_captions` (bool): Whether to return all available captions. Default is False, which returns only preferred captions based on predefined preferences (prioritizing English captions with preferred formats).
 - **Returns:**
-  - `Dict[str, List[CaptionExtension]]`: A dictionary mapping language codes to lists of available caption formats.
+  - `Dict[str, List[YTDLPCaption]]`: A dictionary mapping language codes to lists of available caption objects.
+  Example:
+  ```python
+  {
+      'en': [
+          YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='English'),
+          YTDLPCaption(ext=CaptionExtension.JSON3, url='https://www.youtube.com/api/timedtext?...', name='English')
+      ],
+      'es': [
+          YTDLPCaption(ext=CaptionExtension.VTT, url='https://www.youtube.com/api/timedtext?...', name='Spanish')
+      ]
+  }
+  ```
 - **Note:**
   - Automatic captions are prefixed with 'auto-' to distinguish them from manual captions.
   - When `return_all_captions=False` (default), only preferred captions are returned.
   - When `return_all_captions=True`, all available captions are returned.
+  - Each caption object contains the extension, URL, and name, allowing you to download the captions directly.
 
 ### Models
 
 #### `YTDLPVideoDetails`
-
-A Pydantic model representing detailed information about a YouTube video.
-
-- **Fields:**
-  - `id` (str): The video ID.
-  - `title` (str): The video title.
-  - `description` (Optional[str]): The video description.
-  - `duration` (Optional[int]): The video duration in seconds.
-  - `view_count` (Optional[int]): The number of views.
-  - `like_count` (Optional[int]): The number of likes.
-  - `dislike_count` (Optional[int]): The number of dislikes.
-  - `average_rating` (Optional[float]): The average rating.
-  - `age_limit` (Optional[int]): The age limit.
-  - `webpage_url` (Optional[str]): The webpage URL.
-  - `categories` (Optional[List[str]]): The video categories.
-  - `tags` (Optional[List[str]]): The video tags.
-  - `formats` (List[YTDLPVideoFormat]): The available video formats.
-  - `thumbnails` (List[YTDLPThumbnail]): The available thumbnails.
-  - `automatic_captions` (YTDLPAutomaticCaption): The automatic captions.
-  - `subtitles` (YTDLPSubtitle): The manual subtitles.
-
-#### `YTDLPAutomaticCaption` and `YTDLPSubtitle`
-
-Pydantic models representing automatic captions and manual subtitles.
-
-- **Structure:**
-  - Both models have a `root` field which is a dictionary mapping language codes to lists of caption formats.
-  - Each caption format is represented by a `YTDLPCaption` model.
-
-#### `YTDLPCaption`
-
-A Pydantic model representing a caption format.
-
-- **Fields:**
-  - `ext` (Optional[CaptionExtension]): The caption extension.
-  - `url` (Optional[str]): The caption URL.
-  - `name` (Optional[str]): The caption name.
-
-#### `CaptionExtension`
-
-An enum representing supported caption extensions.
-
-- **Values:**
-  - `VTT`: WebVTT format
-  - `SRT`: SubRip format
-  - `JSON3`: JSON3 format
-  - `TTML`: TTML format
-  - `SRV1`: SRV1 format
-  - `SRV2`: SRV2 format
-  - `SRV3`: SRV3 format
-  - `M3U8`: HLS manifest format
-
-### Exceptions
-
-#### `YouTubeVideoUnavailable`
-
-Raised when a YouTube video is not available.
-
-#### `YTOAuthTokenExpired`
-
-Raised when the OAuth token has expired.
-
-## Examples
-
-See the `examples` directory for more detailed examples:
-
-- `youtube_caption_demo.py`: Demonstrates the improved caption handling in YoutubeHelper.
-- `youtube_video_info.py`: Shows how to extract and use video information.
-
-## Testing
-
-The helper includes comprehensive tests for all functionality, including:
-
-- URL validation tests
-- Video information extraction tests
-- Caption handling tests
-- Error handling tests
-
-Run the tests with pytest:
-
-```bash
-pytest tests/youtube_helper/
-```

@@ -5,6 +5,15 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2025-03-20
+
+### Changed
+- Enhanced `list_available_captions` method in YoutubeHelper:
+  - Now returns full `YTDLPCaption` objects instead of just `CaptionExtension` enums
+  - This provides access to caption URLs and other metadata, enabling direct download
+  - Updated documentation and examples to reflect this change
+  - All tests updated to verify the new return type
+
 ## [0.7.3] - 2025-03-19
 
 ### Added
@@ -197,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.7.4]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.0...v0.7.1
