@@ -164,104 +164,137 @@ class YoutubeHelper():
             log.error(f"Error validating YouTube URL {url}: {str(e)}")
             return False
 
-    def get_video_info(self, url: str) -> YTDLPVideoDetails:
+    def get_video_info(self, url: str, download_options: Optional[Dict[str, Any]] = None) -> YTDLPVideoDetails:
         """
-        Fetches YouTube video information using yt_dlp and returns it as a YoutubeVideoDetails object.
+        Get detailed information about a YouTube video.
 
         Args:
-            url (str): The YouTube URL.
+            url (str): The URL of the YouTube video.
+            download_options (Optional[Dict[str, Any]]): Optional custom download options to override defaults.
 
         Returns:
-            YTDLPVideoDetails: An object containing video information.
+            YTDLPVideoDetails: A model containing detailed information about the video.
 
         Raises:
             YouTubeVideoUnavailable: If the video is not available.
             YTOAuthTokenExpired: If the OAuth token has expired.
-            DownloadError: For other YouTube-DL related errors.
+            Exception: For other errors.
         """
         log.fine("[YoutubeHelper.get_video_info()]")
+        
+        # Use custom download options if provided, otherwise use default options
+        options = download_options if download_options is not None else self.options
+        
         try:
-            with yt_dlp.YoutubeDL(self.options) as ydl:
+            with yt_dlp.YoutubeDL(options) as ydl:
                 try:
                     result = ydl.extract_info(url, download=False)
                     if not result:
                         raise YouTubeVideoUnavailable("No video information returned")
-                    return YTDLPVideoDetails.model_validate(self._extract_video_info(result))
-                except yt_dlp.utils.UnavailableVideoError as e:
-                    # Specific error for unavailable videos
-                    log.error(f"Video unavailable: {str(e)}")
-                    raise YouTubeVideoUnavailable(str(e))
-                except yt_dlp.utils.GeoRestrictedError as e:
-                    # Specific error for geo-restricted videos
-                    log.error(f"Video geo-restricted: {str(e)}")
-                    raise YouTubeVideoUnavailable(f"Video is geo-restricted: {str(e)}")
-                except ExtractorError as e:
-                    log.error(f"YouTube extractor error: {str(e)}")
-                    error_msg = str(e)
-                    if "Sign in to confirm you're not a bot" in error_msg:
-                        log.error("OAuth token has expired")
-                        raise YTOAuthTokenExpired("YouTube OAuth token has expired")
-                    elif "Video unavailable" in error_msg:
-                        log.error("Video is not available")
-                        raise YouTubeVideoUnavailable("The YouTube video is not available")
-                    elif "Private video" in error_msg:
-                        log.error("Video is private")
-                        raise YouTubeVideoUnavailable("The YouTube video is private")
+                    
+                    # Extract the video info
+                    video_info = self._extract_video_info(result)
+                    
+                    try:
+                        # Process automatic captions and subtitles for model validation
+                        auto_captions = video_info.get("automatic_captions", {})
+                        subtitles = video_info.get("subtitles", {})
+                        
+                        # Validate the caption models first
+                        validated_auto_captions = YTDLPAutomaticCaption.model_validate(auto_captions)
+                        validated_subtitles = YTDLPSubtitle.model_validate(subtitles)
+                        
+                        # Update the video info with validated caption models
+                        video_info["automatic_captions"] = validated_auto_captions
+                        video_info["subtitles"] = validated_subtitles
+                        
+                        # Now validate the full video details
+                        return YTDLPVideoDetails.model_validate(video_info)
+                    except Exception as validation_error:
+                        # Log the validation error with more details for debugging
+                        log.warning(f"Validation error for video {url}: {str(validation_error)}")
+                        
+                        # Create a simplified version of the video info with only essential fields
+                        # This is more maintainable than the previous approach
+                        simplified_info = {
+                            "id": video_info.get("youtube_id", "unknown_id"),
+                            "title": video_info.get("title", "Unknown Title"),
+                            # Empty collections to avoid validation errors
+                            "formats": [],
+                            "thumbnails": [],
+                            # Add automatic captions and subtitles as empty objects
+                            "automatic_captions": YTDLPAutomaticCaption.model_validate({"root": {}}),
+                            "subtitles": YTDLPSubtitle.model_validate({"root": {}}),
+                        }
+                        
+                        # Copy over any fields that exist in video_info with default values for missing fields
+                        # This is more maintainable than listing every field explicitly
+                        for field_name in YTDLPVideoDetails.__annotations__:
+                            if field_name not in simplified_info and field_name in video_info:
+                                simplified_info[field_name] = video_info[field_name]
+                        
+                        # Try to validate the simplified info
+                        return YTDLPVideoDetails.model_validate(simplified_info)
+                        
+                except yt_dlp.utils.DownloadError as e:
+                    error_message = str(e)
+                    if "Video unavailable" in error_message:
+                        raise YouTubeVideoUnavailable(f"Video not available: {error_message}")
+                    elif "This video is not available" in error_message:
+                        raise YouTubeVideoUnavailable(f"Video not available: {error_message}")
+                    elif "Sign in to confirm your age" in error_message:
+                        raise YouTubeVideoUnavailable(f"Age-restricted video: {error_message}")
                     else:
-                        log.error(f"YouTube-DL error: {error_msg}")
-                        raise YouTubeVideoUnavailable(error_msg)
-
+                        raise YouTubeVideoUnavailable(f"Download error: {error_message}")
+                except ExtractorError as e:
+                    error_message = str(e)
+                    if "Sign in to confirm you're not a bot" in error_message:
+                        raise YTOAuthTokenExpired(f"OAuth token expired: {error_message}")
+                    else:
+                        raise YouTubeVideoUnavailable(f"Extractor error: {error_message}")
         except (YouTubeVideoUnavailable, YTOAuthTokenExpired):
+            # Re-raise specific exceptions
             raise
         except Exception as e:
-            log.error(f"Unexpected error: {str(e)}")
-            raise YouTubeVideoUnavailable(f"Unexpected error: {str(e)}")
+            # Log and convert other exceptions to YouTubeVideoUnavailable
+            log.error(f"Error getting video info for {url}: {str(e)}")
+            raise YouTubeVideoUnavailable(f"Unknown error: {str(e)}")
 
     def _extract_video_info(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extracts relevant video information from the YouTube API result.
+        Extract relevant information from the yt-dlp result.
 
         Args:
             result (Dict[str, Any]): The raw result dictionary from yt-dlp.
 
         Returns:
-            Dict[str, Any]: A dictionary containing formatted video information.
+            Dict[str, Any]: A dictionary containing the extracted video information.
         """
         log.fine("[YoutubeHelper._extract_video_info()]")
         
-        # Convert timestamp to datetime if present
-        timestamp = result.get("timestamp")
-        published_at = (
-            datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            if timestamp else None
-        )
-
+        # Create a dictionary to hold the video information
+        video_info = {}
+        
+        # Extract the YouTube ID
+        video_info["youtube_id"] = result.get("id", "")
+        
         # Extract basic video information
-        video_info = {
-            "title": result.get("title", "No Video Title"),
-            "duration": result.get("duration", 0),
-            "youtube_id": result.get("id", "No Video ID"),
-            "channel": result.get("channel", "No Channel"),
-            "description": result.get("description", "No Video Description"),
-            "video_url": result.get("original_url", "No Video URL"),
-            "index": result.get("playlist_index"),
-            "view_count": result.get("view_count", 0),
-            "like_count": result.get("like_count", 0),
-            "channel_follower_count": result.get("channel_follower_count", 0),
-            "published_at": published_at,
-            
-            # Captions
-            "automatic_captions": YTDLPAutomaticCaption.model_validate(result.get("automatic_captions", {})),
-            "subtitles": YTDLPSubtitle.model_validate(result.get("subtitles", {})),
-            
-            # Additional metadata
-            "thumbnail": result.get("thumbnail"),
-            "tags": result.get("tags", []),
-            "categories": result.get("categories", []),
-            "is_live": result.get("is_live", False),
-            "was_live": result.get("was_live", False),
-            "age_restricted": result.get("age_restricted", False),
-        }
+        video_info["id"] = result.get("id", "")
+        video_info["title"] = result.get("title", "")
+        video_info["formats"] = result.get("formats", [])
+        video_info["thumbnails"] = result.get("thumbnails", [])
+        
+        # Process automatic captions and subtitles
+        auto_captions = result.get("automatic_captions", {})
+        subtitles = result.get("subtitles", {})
+        
+        # Process captions for model validation
+        processed_auto_captions = self._process_captions_for_model(auto_captions)
+        processed_subtitles = self._process_captions_for_model(subtitles)
+        
+        # Convert to the appropriate model types
+        video_info["automatic_captions"] = YTDLPAutomaticCaption.model_validate(processed_auto_captions)
+        video_info["subtitles"] = YTDLPSubtitle.model_validate(processed_subtitles)
         
         # Add all remaining fields from the result
         video_info.update({
@@ -270,6 +303,60 @@ class YoutubeHelper():
         })
         
         return video_info
+        
+    def _process_captions_for_model(self, captions_dict: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
+        """
+        Process captions dictionary from yt-dlp into a format suitable for our models.
+        
+        Args:
+            captions_dict (Dict[str, List[Dict[str, Any]]]): Raw captions dictionary from yt-dlp
+            
+        Returns:
+            Dict[str, Any]: Processed captions dictionary with proper structure for model validation
+        """
+        # Create a dictionary to hold processed captions
+        processed_captions = {"root": {}}
+        
+        # Process each language in the captions dictionary
+        for lang_code, caption_formats in captions_dict.items():
+            if not caption_formats:
+                continue
+                
+            # Create a list to hold processed caption formats for this language
+            processed_formats = []
+            
+            # Process each caption format
+            for caption_format in caption_formats:
+                # Extract caption extension
+                caption_ext = caption_format.get("ext")
+                
+                # Try to convert the extension to our enum
+                try:
+                    ext = CaptionExtension(caption_ext) if caption_ext else None
+                except ValueError:
+                    # Use the string value if not in our enum
+                    ext = caption_ext
+                
+                # Create a caption object
+                caption_info = {
+                    "ext": ext,
+                    "url": caption_format.get("url"),
+                    "name": caption_format.get("name", f"Caption for {lang_code}")
+                }
+                
+                # Add any other fields from the original caption format
+                for key, value in caption_format.items():
+                    if key not in caption_info:
+                        caption_info[key] = value
+                
+                # Add the processed caption format to the list
+                processed_formats.append(caption_info)
+            
+            # Add the processed formats to the root dictionary
+            if processed_formats:
+                processed_captions["root"][lang_code] = processed_formats
+        
+        return processed_captions
 
     def _extract_captions(self, result: Dict[str, Any]) -> Dict[str, List[YTDLPCaption]]:
         """
@@ -453,27 +540,56 @@ class YoutubeHelper():
             # Combine automatic captions and regular subtitles
             result: Dict[str, List[CaptionExtension]] = {}
             
-            # Process automatic captions
-            for lang_code, captions in video_info.automatic_captions.root.items():
-                # Add 'auto-' prefix to distinguish automatic captions
-                auto_lang_code = f"auto-{lang_code}"
-                if auto_lang_code not in result:
-                    result[auto_lang_code] = []
+            try:
+                # Process automatic captions
+                auto_captions = getattr(video_info, 'automatic_captions', None)
+                if auto_captions and hasattr(auto_captions, 'root'):
+                    # Get the root dictionary safely
+                    root_dict = getattr(auto_captions, 'root', {}) or {}
+                    
+                    for lang_code, captions in root_dict.items():
+                        # Add 'auto-' prefix to distinguish automatic captions
+                        auto_lang_code = f"auto-{lang_code}"
+                        if auto_lang_code not in result:
+                            result[auto_lang_code] = []
+                        
+                        for caption in captions:
+                            # Check if caption has the ext attribute and it's not None
+                            caption_ext = getattr(caption, 'ext', None)
+                            if caption_ext and caption_ext not in result[auto_lang_code]:
+                                result[auto_lang_code].append(caption_ext)
                 
-                for caption in captions:
-                    if caption.ext not in result[auto_lang_code]:
-                        result[auto_lang_code].append(caption.ext)
-            
-            # Process regular subtitles
-            for lang_code, captions in video_info.subtitles.root.items():
-                if lang_code not in result:
-                    result[lang_code] = []
+                # Process regular subtitles
+                subtitles = getattr(video_info, 'subtitles', None)
+                if subtitles and hasattr(subtitles, 'root'):
+                    # Get the root dictionary safely
+                    root_dict = getattr(subtitles, 'root', {}) or {}
+                    
+                    for lang_code, captions in root_dict.items():
+                        if lang_code not in result:
+                            result[lang_code] = []
+                        
+                        for caption in captions:
+                            # Check if caption has the ext attribute and it's not None
+                            caption_ext = getattr(caption, 'ext', None)
+                            if caption_ext and caption_ext not in result[lang_code]:
+                                result[lang_code].append(caption_ext)
                 
-                for caption in captions:
-                    if caption.ext not in result[lang_code]:
-                        result[lang_code].append(caption.ext)
+                # Log the result for debugging
+                if result:
+                    log.debug(f"Found captions for video {url}: {result}")
+                else:
+                    log.info(f"No captions found for video {url}")
+                
+            except Exception as e:
+                log.warning(f"Error processing captions for video {url}: {str(e)}")
+                # Return empty dict if there's an error processing captions
+                return {}
             
             return result
-        except YouTubeVideoUnavailable:
+        except YouTubeVideoUnavailable as e:
             log.warning(f"Video unavailable: {url}")
+            return {}
+        except Exception as e:
+            log.warning(f"Error listing captions for video {url}: {str(e)}")
             return {}

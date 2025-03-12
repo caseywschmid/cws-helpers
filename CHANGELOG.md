@@ -5,6 +5,26 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-03-18
+
+### Added
+- Enhanced caption handling in YoutubeHelper:
+  - Added new `_process_captions_for_model` method for better caption data processing
+  - Added support for custom download options in `get_video_info` method
+  - Added comprehensive tests for caption functionality
+
+### Fixed
+- Fixed issue with captions not being properly processed in YoutubeHelper
+- Fixed validation errors when processing caption data from yt-dlp
+- Improved handling of automatic captions with 'auto-' prefix
+
+### Changed
+- Updated YouTube helper documentation:
+  - Corrected method signatures and return types to match implementation
+  - Added detailed documentation for models and caption handling
+  - Updated examples to demonstrate proper caption usage
+  - Fixed discrepancies between documentation and actual implementation
+
 ## [0.7.1] - 2025-03-15
 
 ### Changed
@@ -165,6 +185,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.7.2]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.3.0...v0.4.0

@@ -2,6 +2,12 @@
 
 A collection of helper utilities for personal Python projects, providing enhanced functionality and convenience features.
 
+## Latest Updates (v0.7.2)
+
+- **Enhanced YouTube Caption Handling**: Improved caption extraction and processing with better support for automatic captions and multiple languages
+- **New Example Scripts**: Added comprehensive examples demonstrating the improved functionality
+- See the [CHANGELOG.md](CHANGELOG.md) for detailed release notes
+
 ## Available Packages
 
 - **[Logger](src/cws_helpers/logger/README.md)**: Enhanced logging system with custom levels, colored output, and file logging capabilities
@@ -10,6 +16,7 @@ A collection of helper utilities for personal Python projects, providing enhance
 - **[YouTube Helper](src/cws_helpers/youtube_helper/README.md)**: Utilities for interacting with YouTube videos, extracting video information, validating URLs, and working with captions
 - **[Google Helper](src/cws_helpers/google_helper/README.md)**: Comprehensive helper for interacting with Google APIs including Sheets, Drive, and Docs with authentication handling
 - **[PowerPath Helper](src/cws_helpers/powerpath_helper/README.md)**: Complete interface for the PowerPath API with models, clients, and utility functions for educational content management
+- **[Anthropic Helper](src/cws_helpers/anthropic_helper/README.md)**: Helper for interacting with Anthropic's Claude API with support for all Claude models
 - *(More packages to be added)*
 
 Each helper includes its own documentation in its respective directory.
@@ -25,7 +32,7 @@ You can install this package directly from GitHub using pip without needing Poet
 pip install git+https://github.com/caseywschmid/cws-helpers.git
 
 # Install a specific version using a tag
-pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
 ```
 
 For requirements.txt:
@@ -34,7 +41,7 @@ For requirements.txt:
 git+https://github.com/caseywschmid/cws-helpers.git
 
 # Or pin to a specific version tag
-git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
 ```
 
 ### Versioning and Updates
@@ -53,7 +60,7 @@ When you install the package, you can control how updates are handled:
 
 2. **Specific version tag** (stable, won't automatically update):
    ```
-   pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.1.0
+   pip install git+https://github.com/caseywschmid/cws-helpers.git@v0.7.2
    ```
 
 3. **Specific commit** (exact version, won't automatically update):
@@ -96,6 +103,9 @@ cws-helpers/
 │       │   ├── openai_helper.py
 │       │   └── README.md
 │       └── ...
+├── examples/         # Example scripts demonstrating usage
+│   ├── youtube_caption_demo.py
+│   └── README.md
 └── ...
 ```
 
@@ -155,8 +165,33 @@ youtube = YoutubeHelper()
 # Check if a URL is a valid YouTube URL
 is_valid = youtube.is_valid_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
-# Get detailed information about a video
-video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+# Get detailed information about a video with captions
+video_info = youtube.get_video_info(
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    download_options={
+        "writesubtitles": True,
+        "writeautomaticsub": True,
+        "subtitleslangs": ["en"]
+    }
+)
+
+# Access automatic captions
+if video_info.automatic_captions and hasattr(video_info.automatic_captions, 'root'):
+    auto_captions = video_info.automatic_captions.root
+    for lang_code, captions in auto_captions.items():
+        print(f"Automatic captions in {lang_code}:")
+        for caption in captions:
+            print(f"  Format: {caption.ext}")
+            print(f"  URL: {caption.url}")
+
+# Access manual subtitles
+if video_info.subtitles and hasattr(video_info.subtitles, 'root'):
+    subtitles = video_info.subtitles.root
+    for lang_code, captions in subtitles.items():
+        print(f"Subtitles in {lang_code}:")
+        for caption in captions:
+            print(f"  Format: {caption.ext}")
+            print(f"  URL: {caption.url}")
 ```
 
 ### Google Helper
@@ -196,7 +231,33 @@ user = get_user(client, "123")
 print(f"User: {user.given_name} {user.family_name}")
 ```
 
+### Anthropic Helper
+
+```python
+from cws_helpers import AnthropicHelper
+
+# Initialize the helper (API key from environment variable)
+helper = AnthropicHelper()
+
+# Create a simple completion
+response = helper.create_message(
+    prompt="What is the capital of France?",
+    model="claude-3-haiku-20240307"
+)
+
+# Stream a response
+for chunk in helper.create_message_stream(
+    prompt="Write a short poem about AI",
+    model="claude-3-sonnet-20240229"
+):
+    print(chunk, end="", flush=True)
+```
+
 For detailed usage instructions and API documentation for each helper, see the README.md file in the helper's directory.
+
+## Examples
+
+Check out the [examples directory](examples/) for complete example scripts demonstrating how to use the various helpers.
 
 ## Dependencies
 
@@ -206,10 +267,11 @@ For detailed usage instructions and API documentation for each helper, see the R
 - pydantic ^2.10.6
 - boto3 ^1.37.9
 - yt-dlp ^2025.2.19
-- google-auth ^2.32.0
-- google-auth-oauthlib ^1.2.0
+- google-auth ^2.38.0
+- google-auth-oauthlib ^1.2.1
 - google-auth-httplib2 ^0.2.0
-- google-api-python-client ^2.133.0
+- google-api-python-client ^2.163.0
+- anthropic ^0.49.0
 - pytest ^8.3.5 (dev dependency)
 - moto ^5.1.1 (dev dependency)
 
