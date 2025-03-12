@@ -1,6 +1,6 @@
 """CWS Helpers - Collection of utility helpers for personal projects."""
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 # For convenient imports
 from .logger import configure_logging

@@ -5,6 +5,14 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-03-15
+
+### Changed
+- Enhanced logging in YoutubeHelper:
+  - Added method name context to log messages for better traceability
+  - Changed log level from debug to fine for several methods to improve log readability
+  - Added logging to previously unlogged methods
+
 ## [0.7.0] - 2025-03-10
 
 ### Added

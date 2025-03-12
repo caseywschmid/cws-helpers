@@ -109,6 +109,7 @@ class YoutubeHelper():
         Returns:
             bool: True if the URL is a valid YouTube URL with a video ID, False otherwise
         """
+        log.fine("[YoutubeHelper.is_valid_url()]")
         if not url or not isinstance(url, str):
             return False
 
@@ -178,7 +179,7 @@ class YoutubeHelper():
             YTOAuthTokenExpired: If the OAuth token has expired.
             DownloadError: For other YouTube-DL related errors.
         """
-        log.debug(f"Fetching video info for URL: {url}")
+        log.fine("[YoutubeHelper.get_video_info()]")
         try:
             with yt_dlp.YoutubeDL(self.options) as ydl:
                 try:
@@ -226,7 +227,7 @@ class YoutubeHelper():
         Returns:
             Dict[str, Any]: A dictionary containing formatted video information.
         """
-        log.debug("Extracting video information from result")
+        log.fine("[YoutubeHelper._extract_video_info()]")
         
         # Convert timestamp to datetime if present
         timestamp = result.get("timestamp")
@@ -280,7 +281,7 @@ class YoutubeHelper():
         Returns:
             Dict[str, List[YoutubeCaption]]: A dictionary mapping language codes to lists of caption formats.
         """
-        log.debug("Extracting caption information")
+        log.fine("[YoutubeHelper._extract_captions()]")
         captions: Dict[str, List[YTDLPCaption]] = {}
 
         # Try automatic captions first
@@ -336,6 +337,7 @@ class YoutubeHelper():
         Returns:
             Optional[str]: The video ID if found and valid, None otherwise.
         """
+        log.fine("[YoutubeHelper.extract_video_id()]")
         if not url or not isinstance(url, str):
             return None
 
@@ -437,7 +439,7 @@ class YoutubeHelper():
             }
             ```
         """
-        log.debug(f"Listing available captions for URL: {url}")
+        log.fine("[YoutubeHelper.list_available_captions()]")
         
         # Check if the URL is valid
         if not self.is_valid_url(url):
