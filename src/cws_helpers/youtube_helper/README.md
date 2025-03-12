@@ -46,21 +46,30 @@ from cws_helpers import YoutubeHelper, CaptionExtension
 
 youtube = YoutubeHelper()
 
-# Get available captions
-captions = youtube.list_available_captions("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+# Get preferred captions (default behavior)
+preferred_captions = youtube.list_available_captions("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
-# Example output:
+# Example output (only preferred captions):
+# {
+#     'en': [CaptionExtension.VTT, CaptionExtension.JSON3]
+# }
+
+# Get all available captions
+all_captions = youtube.list_available_captions("https://www.youtube.com/watch?v=dQw4w9WgXcQ", return_all_captions=True)
+
+# Example output (all captions):
 # {
 #     'auto-en': [CaptionExtension.VTT, CaptionExtension.JSON3, CaptionExtension.SRV1],
 #     'en': [CaptionExtension.VTT, CaptionExtension.JSON3, CaptionExtension.SRV1],
-#     'es': [CaptionExtension.VTT]
+#     'es': [CaptionExtension.VTT],
+#     'fr': [CaptionExtension.VTT]
 # }
 
 # Note: Automatic captions are prefixed with 'auto-'
 
 # Check if a specific language and format is available
-has_english_vtt = CaptionExtension.VTT in captions.get('en', [])
-has_auto_english = 'auto-en' in captions
+has_english_vtt = CaptionExtension.VTT in preferred_captions.get('en', [])
+has_auto_english = 'auto-en' in preferred_captions
 
 # Access caption data from video_info
 video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
@@ -172,16 +181,19 @@ Get detailed information about a YouTube video.
   - `YouTubeVideoUnavailable`: If the video is not available.
   - `YTOAuthTokenExpired`: If the OAuth token has expired.
 
-#### `list_available_captions(url: str) -> Dict[str, List[CaptionExtension]]`
+#### `list_available_captions(url: str, return_all_captions: bool = False) -> Dict[str, List[CaptionExtension]]`
 
 List available captions for a YouTube video.
 
 - **Parameters:**
   - `url` (str): The YouTube URL.
+  - `return_all_captions` (bool): Whether to return all available captions. Default is False, which returns only preferred captions based on predefined preferences (prioritizing English captions with preferred formats).
 - **Returns:**
   - `Dict[str, List[CaptionExtension]]`: A dictionary mapping language codes to lists of available caption formats.
 - **Note:**
-  - The `download_options` parameter mentioned in the previous documentation is not currently implemented for this method.
+  - Automatic captions are prefixed with 'auto-' to distinguish them from manual captions.
+  - When `return_all_captions=False` (default), only preferred captions are returned.
+  - When `return_all_captions=True`, all available captions are returned.
 
 ### Models
 
@@ -268,4 +280,4 @@ Run the tests with pytest:
 
 ```bash
 pytest tests/youtube_helper/
-``` 
+```

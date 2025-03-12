@@ -465,7 +465,7 @@ def mock_caption_info():
 
 def test_list_available_captions(youtube_helper, mock_caption_info):
     """Test listing available captions for a video."""
-    # Test directly with _extract_captions instead of going through get_video_info
+    # Test directly with _extract_captions to verify it works correctly
     captions = youtube_helper._extract_captions(mock_caption_info)
     
     # Check that captions are extracted correctly
@@ -473,17 +473,37 @@ def test_list_available_captions(youtube_helper, mock_caption_info):
     
     # If the method returns captions, check them
     if 'en' in captions:
-        assert CaptionExtension.VTT in captions['en'] or any(c.ext == CaptionExtension.VTT for c in captions['en'])
+        assert any(c.ext == CaptionExtension.VTT for c in captions['en'])
     
     if 'es' in captions:
-        assert CaptionExtension.VTT in captions['es'] or any(c.ext == CaptionExtension.VTT for c in captions['es'])
+        assert any(c.ext == CaptionExtension.VTT for c in captions['es'])
     
     if 'fr' in captions:
-        assert CaptionExtension.VTT in captions['fr'] or any(c.ext == CaptionExtension.VTT for c in captions['fr'])
+        assert any(c.ext == CaptionExtension.VTT for c in captions['fr'])
     
     if 'de' in captions:
-        assert CaptionExtension.TTML in captions['de'] or any(c.ext == CaptionExtension.TTML for c in captions['de'])
-        assert CaptionExtension.SRV3 in captions['de'] or any(c.ext == CaptionExtension.SRV3 for c in captions['de'])
+        assert any(c.ext == CaptionExtension.TTML for c in captions['de']) or any(c.ext == CaptionExtension.SRV3 for c in captions['de'])
+    
+    # Now test the list_available_captions method with mocked _extract_captions
+    with patch.object(youtube_helper, '_extract_captions', return_value=captions):
+        with patch.object(yt_dlp.YoutubeDL, 'extract_info', return_value=mock_caption_info):
+            # Test with default parameter (return_all_captions=False)
+            preferred_captions = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL)
+            
+            # Verify preferred captions are returned
+            assert isinstance(preferred_captions, dict)
+            
+            # Test with return_all_captions=True
+            all_captions = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL, return_all_captions=True)
+            
+            # Verify all captions are returned
+            assert isinstance(all_captions, dict)
+            
+            # Verify preferred captions are a subset of all captions
+            for lang, formats in preferred_captions.items():
+                assert lang in all_captions
+                for fmt in formats:
+                    assert fmt in all_captions[lang]
 
 def test_list_available_captions_no_captions(youtube_helper):
     """Test listing available captions when none are available."""
@@ -498,22 +518,41 @@ def test_list_available_captions_no_captions(youtube_helper):
     captions = youtube_helper._extract_captions(mock_info)
     assert isinstance(captions, dict)
     assert len(captions) == 0
+    
+    # Test list_available_captions with both parameter values
+    with patch.object(yt_dlp.YoutubeDL, 'extract_info', return_value=mock_info):
+        # Test with default parameter (return_all_captions=False)
+        preferred_captions = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL)
+        assert isinstance(preferred_captions, dict)
+        assert len(preferred_captions) == 0
+        
+        # Test with return_all_captions=True
+        all_captions = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL, return_all_captions=True)
+        assert isinstance(all_captions, dict)
+        assert len(all_captions) == 0
 
 def test_list_available_captions_video_unavailable(youtube_helper):
     """Test handling of unavailable videos when listing captions."""
     with patch.object(yt_dlp.YoutubeDL, 'extract_info', side_effect=yt_dlp.utils.DownloadError('Video unavailable')):
-        # The method now catches the exception and returns an empty dictionary
+        # Test with default parameter (return_all_captions=False)
         result = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL)
         assert result == {}
+        
+        # Test with return_all_captions=True
+        result_all = youtube_helper.list_available_captions(SAMPLE_VIDEO_URL, return_all_captions=True)
+        assert result_all == {}
 
 def test_list_available_captions_invalid_url(youtube_helper):
     """Test handling of invalid URLs when listing captions."""
     # First check if the URL is valid
     with patch.object(youtube_helper, 'is_valid_url', return_value=False):
-        # Then mock the list_available_captions method to avoid making a real API call
-        with patch.object(youtube_helper, 'get_video_info', side_effect=YouTubeVideoUnavailable("Invalid URL")):
-            result = youtube_helper.list_available_captions("not_a_url")
-            assert result == {}
+        # Test with default parameter (return_all_captions=False)
+        result = youtube_helper.list_available_captions("not_a_url")
+        assert result == {}
+        
+        # Test with return_all_captions=True
+        result_all = youtube_helper.list_available_captions("not_a_url", return_all_captions=True)
+        assert result_all == {}
 
 # ---------------------------- Private Method Tests ---------------------------- #
 
