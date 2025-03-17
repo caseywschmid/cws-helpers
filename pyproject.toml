@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cws-helpers"
-version = "0.7.4"
+version = "0.8.0"
 description = "Collection of helper utilities for personal projects"
 authors = ["Casey Schmid <caseywschmid@gmail.com>"]
 readme = "README.md"

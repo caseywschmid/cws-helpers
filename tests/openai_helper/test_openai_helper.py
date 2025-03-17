@@ -189,7 +189,8 @@ def test_pydantic_model_schema(mock_openai_response):
         helper = OpenAIHelper(api_key="test_key", organization="test_org")
         response = helper.create_chat_completion(
             prompt="Generate a person",
-            response_format=TestModel
+            response_format=TestModel,
+            use_beta_parse=False  # Disable beta parse endpoint to use legacy approach
         )
         
         # Verify the response was parsed as JSON

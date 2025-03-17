@@ -106,6 +106,50 @@ for country in response:
     print(f"{country['name']} has a population of {country['population']}")
 ```
 
+### Enhanced Structured Output with Beta Parse Endpoint
+
+The OpenAI Helper now supports the beta parse endpoint for even better structured output handling. This provides improved validation and automatic parsing of responses into Pydantic models.
+
+```python
+from pydantic import BaseModel
+from typing import List
+
+class Step(BaseModel):
+    explanation: str
+    output: str
+
+class MathResponse(BaseModel):
+    steps: List[Step]
+    final_answer: str
+
+# The response will be a ParsedChatCompletion object with the parsed data
+completion = helper.create_chat_completion(
+    prompt="Solve the equation 2x + 5 = 15",
+    system_message="You are a helpful math tutor. Provide step-by-step solutions.",
+    response_format=MathResponse,
+    model="gpt-4o"
+)
+
+# Access the parsed data
+message = completion.choices[0].message
+if message.parsed:
+    for step in message.parsed.steps:
+        print(f"Step: {step.explanation}")
+        print(f"Result: {step.output}")
+    print(f"Final answer: {message.parsed.final_answer}")
+```
+
+You can disable this feature if needed:
+
+```python
+# Use the legacy approach instead of the beta parse endpoint
+response = helper.create_chat_completion(
+    prompt="Give me information about France",
+    response_format=Country,
+    use_beta_parse=False  # Disable the beta parse endpoint
+)
+```
+
 ### Streaming Responses
 
 For long responses or real-time applications, you can use streaming to get tokens as they're generated.
@@ -190,11 +234,25 @@ Creates a chat completion using the specified parameters.
 - `seed`: For deterministic results, provide a seed value.
 - `tool_choice`: Controls which (if any) function is called by the model.
 - `tools`: A list of tools the model may call.
+- `use_beta_parse`: If True and a Pydantic model is provided as response_format, use the beta parse endpoint for better structured output handling. Defaults to True.
 
 **Returns:**
 - For regular requests: A string containing the model's response.
-- For JSON mode or structured output: A dictionary or structured data.
+- For JSON mode or structured output with legacy approach: A dictionary or structured data.
+- For structured output with beta parse endpoint: A ParsedChatCompletion object.
 - For streaming: A stream object that yields response chunks.
+
+#### `create_structured_chat_completion(messages: List[ChatCompletionMessageParam], model: str, response_format: Type[ResponseFormatT], **kwargs)`
+
+Creates a structured chat completion using the beta parse endpoint.
+
+**Required Parameters:**
+- `messages`: List of message objects to send to the API.
+- `model`: ID of the model to use.
+- `response_format`: A Pydantic model class that defines the structure of the response.
+
+**Returns:**
+- A ParsedChatCompletion object containing the structured response.
 
 #### `encode_image(image_path: str) -> str`
 
@@ -210,12 +268,15 @@ Static method to encode an image file to base64 for API requests.
 
 This helper is designed to work with OpenAI API version 1.65.5. If you're using a different version, you may see a warning message. You can mute this warning by setting the `MUTE_OPENAI_HELPER_WARNING` environment variable to "True".
 
+The beta parse endpoint requires a newer version of the OpenAI SDK. If your version doesn't support it, the helper will automatically fall back to the legacy approach.
+
 ## Error Handling
 
 The helper includes error handling for common issues:
 - Missing image files
 - JSON parsing errors
 - API authentication errors
+- Beta parse endpoint availability
 
 ## Examples
 
@@ -272,22 +333,26 @@ helper = OpenAIHelper(
     organization=os.environ.get("OPENAI_ORGANIZATION")
 )
 
-# Get a structured recipe
-response = helper.create_chat_completion(
+# Get a structured recipe using the beta parse endpoint
+completion = helper.create_chat_completion(
     prompt="Give me a recipe for chocolate chip cookies",
     system_message="You are a professional chef. Provide detailed recipes in the requested format.",
     response_format=Recipe,
-    temperature=0.3
+    temperature=0.3,
+    model="gpt-4o"
 )
 
 # Access the structured data
-print(f"Recipe: {response['name']}")
-print("\nIngredients:")
-for ingredient in response['ingredients']:
-    print(f"- {ingredient}")
-print("\nInstructions:")
-for i, step in enumerate(response['instructions'], 1):
-    print(f"{i}. {step}")
-print(f"\nPrep time: {response['prep_time_minutes']} minutes")
-print(f"Cook time: {response['cook_time_minutes']} minutes")
+message = completion.choices[0].message
+if message.parsed:
+    recipe = message.parsed
+    print(f"Recipe: {recipe.name}")
+    print("\nIngredients:")
+    for ingredient in recipe.ingredients:
+        print(f"- {ingredient}")
+    print("\nInstructions:")
+    for i, step in enumerate(recipe.instructions, 1):
+        print(f"{i}. {step}")
+    print(f"\nPrep time: {recipe.prep_time_minutes} minutes")
+    print(f"Cook time: {recipe.cook_time_minutes} minutes")
 ``` 

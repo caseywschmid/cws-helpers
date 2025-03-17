@@ -5,6 +5,21 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-03-21
+
+### Added
+- Enhanced OpenAI Helper with structured outputs support:
+  - Added support for the beta parse endpoint for improved Pydantic model handling
+  - New `create_structured_chat_completion` method for direct access to the parse endpoint
+  - Added `use_beta_parse` parameter to control when the beta endpoint is used
+  - Automatic fallback to standard endpoint when beta is not available
+  - Comprehensive tests for all new functionality
+  - Updated documentation with examples of using structured outputs
+
+### Changed
+- Refactored message creation in OpenAI Helper into a helper method for better code organization
+- Improved error handling for JSON parsing and API compatibility
+
 ## [0.7.4] - 2025-03-20
 
 ### Changed
@@ -206,6 +221,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.8.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.1...v0.7.2

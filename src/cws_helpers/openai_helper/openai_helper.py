@@ -13,7 +13,7 @@ if os.getenv("OPENAI_HELPER_PACKAGE_TEST", "False").lower() in ("true", "1", "t"
 
 import json
 from openai import OpenAI
-from typing import List, Optional, Annotated, Dict, Any, Union, Iterable, Type
+from typing import List, Optional, Annotated, Dict, Any, Union, Iterable, Type, TypeVar, Generic
 import base64
 from openai.types.chat import (
     ChatCompletion,
@@ -35,6 +35,17 @@ from openai._types import NotGiven, NOT_GIVEN
 from openai._streaming import Stream
 from pydantic import BaseModel
 
+# Import beta chat completions for structured outputs
+try:
+    from openai.types.chat.parsed_chat_completion import ParsedChatCompletion
+except ImportError:
+    # Define a fallback for older versions
+    class ParsedChatCompletion(ChatCompletion):
+        pass
+
+# Define a type variable for response format types
+ResponseFormatT = TypeVar('ResponseFormatT')
+
 # The version this helper was developed with
 OPENAI_VERSION = "1.65.5"
 
@@ -48,6 +59,7 @@ class OpenAIHelper:
     - JSON mode
     - Structured outputs using JSON schema
     - Pydantic model parsing
+    - Beta structured outputs with automatic parsing
     """
 
     def __init__(
@@ -121,7 +133,8 @@ class OpenAIHelper:
         user: str | NotGiven = NOT_GIVEN,
         stream_options: Optional[ChatCompletionStreamOptionsParam] = None,
         modality: Optional[ChatCompletionModality] = None,
-    ) -> Union[Dict[str, Any], str, ChatCompletion, Stream[ChatCompletionChunk]]:
+        use_beta_parse: bool = True,
+    ) -> Union[Dict[str, Any], str, ChatCompletion, Stream[ChatCompletionChunk], ParsedChatCompletion]:
         """
         Creates a chat completion using the specified parameters and returns the
         response from the OpenAI API.
@@ -134,6 +147,7 @@ class OpenAIHelper:
         - Streaming responses
         - Function/tool calling
         - All latest OpenAI API features
+        - Beta structured outputs with automatic parsing (when use_beta_parse=True)
 
         Parameters
         ----------
@@ -258,16 +272,63 @@ class OpenAIHelper:
         stream_options: Optional configuration for streaming responses
         
         modality: Optional modality configuration for multi-modal models
+        
+        use_beta_parse: If True and a Pydantic model is provided as response_format,
+          use the beta.chat.completions.parse endpoint for better structured output
+          handling. Defaults to True.
 
         Returns
         -------
-        dict or str
-            The response from the OpenAI API. Returns a dictionary if json_mode
-            is True, otherwise returns a string.
+        dict or str or ParsedChatCompletion
+            The response from the OpenAI API. Returns:
+            - A dictionary if json_mode is True or a Pydantic model is used with the legacy approach
+            - A string for basic text responses
+            - A ParsedChatCompletion object if a Pydantic model is used with the beta parse endpoint
+            - A Stream object if streaming is enabled
         """
         log.fine("[OpenAIHelper] create_chat_completion")
 
-        # Handle response format
+        # Check if we should use the beta parse endpoint for structured outputs
+        if (use_beta_parse and 
+            isinstance(response_format, type) and 
+            issubclass(response_format, BaseModel) and
+            hasattr(self.client, 'beta') and
+            hasattr(self.client.beta, 'chat') and
+            hasattr(self.client.beta.chat, 'completions') and
+            hasattr(self.client.beta.chat.completions, 'parse')):
+            
+            log.info("[OpenAIHelper] Using beta.chat.completions.parse for structured output")
+            
+            # Create messages for the beta parse endpoint
+            messages = self._create_messages(prompt, system_message, images)
+            
+            try:
+                # Call the structured chat completion method
+                return self.create_structured_chat_completion(
+                    messages=messages,
+                    model=model,
+                    response_format=response_format,
+                    frequency_penalty=frequency_penalty,
+                    logit_bias=logit_bias,
+                    logprobs=logprobs,
+                    max_tokens=max_tokens,
+                    n=n,
+                    presence_penalty=presence_penalty,
+                    seed=seed,
+                    stop=stop,
+                    temperature=temperature,
+                    tool_choice=tool_choice,
+                    tools=tools,
+                    top_logprobs=top_logprobs,
+                    top_p=top_p,
+                    user=user,
+                )
+            except Exception as e:
+                log.warning(f"[OpenAIHelper] Beta parse endpoint failed: {e}. Falling back to standard endpoint.")
+                # Fall back to the standard approach if the beta endpoint fails
+                pass
+
+        # Handle response format for standard endpoint
         if isinstance(response_format, type) and issubclass(response_format, BaseModel):
             # Convert Pydantic model to JSON schema
             schema = response_format.model_json_schema()
@@ -279,58 +340,7 @@ class OpenAIHelper:
             response_format = ResponseFormatJSONObject(type="json_object")
 
         # Create the messages
-        messages: List[ChatCompletionMessageParam] = []
-        if system_message:
-            system_message_param = ChatCompletionSystemMessageParam(
-                role="system", content=system_message
-            )
-            messages.append(system_message_param)
-
-        user_message_content: List[ChatCompletionContentPartParam] = []
-
-        text_param: ChatCompletionContentPartTextParam = {
-            "type": "text",
-            "text": prompt,
-        }
-
-        user_message_content.append(text_param)
-
-        if images:
-            for image in images:
-                # perform a check to see if the image is a local file path or a url
-                # urls look like this: "https://edugatherer-images.s3.amazonaws.com/MATH/agile_mind/item_01597/test_1597_1.gif"
-                if image.startswith("http"):
-                    image_param: ChatCompletionContentPartImageParam = {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": image,
-                            # Optionally specify "detail" if needed, e.g., "detail": "high"
-                        },
-                    }
-                    user_message_content.append(image_param)
-                else:
-                    if not os.path.exists(image):
-                        log.error(f"Image file not found: {image}")
-                        continue
-                    image_base64 = self.encode_image(image)
-                    image_param: ChatCompletionContentPartImageParam = {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_base64}",
-                            # Optionally specify "detail" if needed, e.g., "detail": "high"
-                        },
-                    }
-                    user_message_content.append(image_param)
-        else:
-            log.info("[OpenAIHelper] No images")
-
-        # Create the user message
-        user_message_param: ChatCompletionUserMessageParam = {
-            "role": "user",
-            "content": user_message_content,
-        }
-
-        messages.append(user_message_param)
+        messages = self._create_messages(prompt, system_message, images)
 
         completion_params = {
             "messages": messages,
@@ -393,6 +403,193 @@ class OpenAIHelper:
                 raise e
 
         return content
+
+    def create_structured_chat_completion(
+        self,
+        messages: List[ChatCompletionMessageParam],
+        model: str,
+        response_format: Type[ResponseFormatT],
+        frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
+        logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
+        logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
+        max_tokens: Optional[int] | None = 4096,
+        n: Optional[int] | None = 1,
+        presence_penalty: Optional[float] | NotGiven = NOT_GIVEN,
+        seed: Optional[int] | NotGiven = NOT_GIVEN,
+        stop: Union[Optional[str], List[str]] | NotGiven = NOT_GIVEN,
+        temperature: Optional[float] | None = 0.7,
+        tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven = NOT_GIVEN,
+        tools: Iterable[ChatCompletionToolParam] | NotGiven = NOT_GIVEN,
+        top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
+        top_p: Optional[float] | NotGiven = NOT_GIVEN,
+        user: str | NotGiven = NOT_GIVEN,
+    ) -> ParsedChatCompletion[ResponseFormatT]:
+        """
+        Creates a structured chat completion using the beta.chat.completions.parse endpoint.
+        This method provides enhanced support for Pydantic models with automatic parsing.
+        
+        Parameters
+        ----------
+        messages: List of message objects to send to the API.
+        
+        model: ID of the model to use.
+        
+        response_format: A Pydantic model class that defines the structure of the response.
+        
+        frequency_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens
+          based on their existing frequency in the text so far.
+          
+        logit_bias: Modify the likelihood of specified tokens appearing in the completion.
+        
+        logprobs: Whether to return log probabilities of the output tokens or not.
+        
+        max_tokens: The maximum number of tokens that can be generated in the chat completion.
+        
+        n: How many chat completion choices to generate for each input message.
+        
+        presence_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens
+          based on whether they appear in the text so far.
+          
+        seed: If specified, our system will make a best effort to sample deterministically.
+        
+        stop: Up to 4 sequences where the API will stop generating further tokens.
+        
+        temperature: What sampling temperature to use, between 0 and 2.
+        
+        tool_choice: Controls which (if any) function is called by the model.
+        
+        tools: A list of tools the model may call.
+        
+        top_logprobs: An integer between 0 and 20 specifying the number of most likely tokens
+          to return at each token position.
+          
+        top_p: An alternative to sampling with temperature, called nucleus sampling.
+        
+        user: A unique identifier representing your end-user.
+        
+        Returns
+        -------
+        ParsedChatCompletion[ResponseFormatT]
+            A ParsedChatCompletion object containing the structured response.
+            The parsed data can be accessed via completion.choices[0].message.parsed
+        """
+        log.fine("[OpenAIHelper] create_structured_chat_completion")
+        
+        # Ensure the beta module is available
+        if not (hasattr(self.client, 'beta') and 
+                hasattr(self.client.beta, 'chat') and 
+                hasattr(self.client.beta.chat, 'completions') and
+                hasattr(self.client.beta.chat.completions, 'parse')):
+            raise ImportError("The beta.chat.completions.parse endpoint is not available in your OpenAI SDK version. "
+                             f"Current version: {version('openai')}. Please upgrade to a newer version.")
+        
+        # Prepare parameters for the parse endpoint
+        parse_params = {
+            "messages": messages,
+            "model": model,
+            "response_format": response_format,
+            "frequency_penalty": frequency_penalty,
+            "logit_bias": logit_bias,
+            "logprobs": logprobs,
+            "max_tokens": max_tokens,
+            "n": n,
+            "presence_penalty": presence_penalty,
+            "seed": seed,
+            "stop": stop,
+            "temperature": temperature,
+            "tool_choice": tool_choice,
+            "tools": tools,
+            "top_logprobs": top_logprobs,
+            "top_p": top_p,
+            "user": user,
+        }
+        
+        # Filter out None values
+        parse_params = {k: v for k, v in parse_params.items() if v is not None}
+        
+        # Filter out NotGiven values
+        parse_params = {k: v for k, v in parse_params.items() if v is not NOT_GIVEN}
+        
+        log.info("[OpenAIHelper] Sending structured completion request to OpenAI API")
+        
+        # Call the parse endpoint
+        return self.client.beta.chat.completions.parse(**parse_params)
+
+    def _create_messages(
+        self, 
+        prompt: str, 
+        system_message: Optional[str] = None,
+        images: Optional[List[str]] = None
+    ) -> List[ChatCompletionMessageParam]:
+        """
+        Helper method to create message objects for the OpenAI API.
+        
+        Parameters
+        ----------
+        prompt : str
+            The user prompt text
+        system_message : Optional[str]
+            Optional system message
+        images : Optional[List[str]]
+            Optional list of image paths or URLs
+            
+        Returns
+        -------
+        List[ChatCompletionMessageParam]
+            List of message objects ready for the API
+        """
+        messages: List[ChatCompletionMessageParam] = []
+        
+        # Add system message if provided
+        if system_message:
+            system_message_param = ChatCompletionSystemMessageParam(
+                role="system", content=system_message
+            )
+            messages.append(system_message_param)
+
+        # Create user message content
+        user_message_content: List[ChatCompletionContentPartParam] = []
+
+        # Add text content
+        text_param: ChatCompletionContentPartTextParam = {
+            "type": "text",
+            "text": prompt,
+        }
+        user_message_content.append(text_param)
+
+        # Add images if provided
+        if images:
+            for image in images:
+                # Check if the image is a URL or local file path
+                if image.startswith("http"):
+                    image_param: ChatCompletionContentPartImageParam = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": image,
+                        },
+                    }
+                    user_message_content.append(image_param)
+                else:
+                    if not os.path.exists(image):
+                        log.error(f"Image file not found: {image}")
+                        continue
+                    image_base64 = self.encode_image(image)
+                    image_param: ChatCompletionContentPartImageParam = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_base64}",
+                        },
+                    }
+                    user_message_content.append(image_param)
+        
+        # Create the user message
+        user_message_param: ChatCompletionUserMessageParam = {
+            "role": "user",
+            "content": user_message_content,
+        }
+        
+        messages.append(user_message_param)
+        return messages
 
     @staticmethod
     def encode_image(image_path: str) -> str:
