@@ -8,7 +8,6 @@ log = configure_logging(__name__)
 import pathlib
 from typing import Optional, Any, Dict, List
 from urllib import parse
-from datetime import datetime, timezone
 import yt_dlp
 from yt_dlp.utils import ExtractorError, DownloadError
 
@@ -109,7 +108,7 @@ class YoutubeHelper():
         Returns:
             bool: True if the URL is a valid YouTube URL with a video ID, False otherwise
         """
-        log.fine("[YoutubeHelper.is_valid_url()]")
+        log.debug("is_valid_url")
         if not url or not isinstance(url, str):
             return False
 
@@ -180,7 +179,7 @@ class YoutubeHelper():
             YTOAuthTokenExpired: If the OAuth token has expired.
             Exception: For other errors.
         """
-        log.fine("[YoutubeHelper.get_video_info()]")
+        log.debug("get_video_info")
         
         # Use custom download options if provided, otherwise use default options
         options = download_options if download_options is not None else self.options
@@ -270,7 +269,7 @@ class YoutubeHelper():
         Returns:
             Dict[str, Any]: A dictionary containing the extracted video information.
         """
-        log.fine("[YoutubeHelper._extract_video_info()]")
+        log.debug("_extract_video_info")
         
         # Create a dictionary to hold the video information
         video_info = {}
@@ -369,7 +368,7 @@ class YoutubeHelper():
             Dict[str, List[YTDLPCaption]]: A dictionary mapping language codes to lists of caption formats.
             Automatic captions are prefixed with 'auto-' in the language code.
         """
-        log.fine("[YoutubeHelper._extract_captions()]")
+        log.debug("_extract_captions")
         captions: Dict[str, List[YTDLPCaption]] = {}
 
         # Define caption format preferences with language names
@@ -467,7 +466,7 @@ class YoutubeHelper():
         Returns:
             Optional[str]: The video ID if found and valid, None otherwise.
         """
-        log.fine("[YoutubeHelper.extract_video_id()]")
+        log.debug("extract_video_id")
         if not url or not isinstance(url, str):
             return None
 
@@ -579,7 +578,7 @@ class YoutubeHelper():
             }
             ```
         """
-        log.fine("[YoutubeHelper.list_available_captions()]")
+        log.debug("list_available_captions")
         
         # Check if the URL is valid
         if not self.is_valid_url(url):
@@ -621,7 +620,7 @@ class YoutubeHelper():
                         if preferred_captions:
                             log.debug(f"Found preferred captions for video {url}: {preferred_captions}")
                         else:
-                            log.info(f"No preferred captions found for video {url}")
+                            log.debug(f"No preferred captions found for video {url}")
                         
                         return preferred_captions
                     
@@ -629,7 +628,7 @@ class YoutubeHelper():
                     if all_captions:
                         log.debug(f"Found all captions for video {url}: {all_captions}")
                     else:
-                        log.info(f"No captions found for video {url}")
+                        log.debug(f"No captions found for video {url}")
                     
                     return all_captions
                     

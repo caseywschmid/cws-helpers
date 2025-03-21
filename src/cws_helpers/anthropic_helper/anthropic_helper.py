@@ -28,7 +28,7 @@ from dotenv import load_dotenv, find_dotenv
 dotenv_path = find_dotenv(usecwd=True)
 if dotenv_path:
     load_dotenv(dotenv_path)
-    log.fine(f"Loaded environment variables from {dotenv_path}")
+    log.info(f"Loaded environment variables from {dotenv_path}")
 else:
     log.warning("No .env file found. Make sure to set CLAUDE_API_KEY environment variable.")
 
@@ -389,10 +389,10 @@ class AnthropicHelper:
         model_to_use = model or self.model
 
         # Create the message
-        log.fine(f"Creating message with model {model_to_use}")
-        log.fine(f"Prompt: {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
+        log.info(f"Creating message with model {model_to_use}")
+        log.info(f"Prompt: {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
         if system:
-            log.fine(f"System: {system[:100]}{'...' if len(system) > 100 else ''}")
+            log.info(f"System: {system[:100]}{'...' if len(system) > 100 else ''}")
 
         try:
             # Prepare the message parameters
@@ -545,7 +545,7 @@ class AnthropicHelper:
             if msg["role"] not in ["user", "assistant"]:
                 raise ValueError("Message role must be 'user' or 'assistant'")
 
-        log.fine(
+        log.info(
             f"Creating conversation with {len(messages)} messages using model {model_to_use}"
         )
 

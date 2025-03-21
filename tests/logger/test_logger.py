@@ -9,7 +9,6 @@ from cws_helpers.logger import (
     FINE_LEVEL,
     STEP_LEVEL,
     SUCCESS_LEVEL,
-    CONTEXT_DISPLAY,
     ConsoleFormatter
 )
 

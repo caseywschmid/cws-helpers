@@ -286,7 +286,7 @@ class OpenAIHelper:
             - A ParsedChatCompletion object if a Pydantic model is used with the beta parse endpoint
             - A Stream object if streaming is enabled
         """
-        log.fine("[OpenAIHelper] create_chat_completion")
+        log.debug("create_chat_completion")
 
         # Check if we should use the beta parse endpoint for structured outputs
         if (use_beta_parse and 
@@ -297,7 +297,7 @@ class OpenAIHelper:
             hasattr(self.client.beta.chat, 'completions') and
             hasattr(self.client.beta.chat.completions, 'parse')):
             
-            log.info("[OpenAIHelper] Using beta.chat.completions.parse for structured output")
+            log.debug("Using beta.chat.completions.parse for structured output")
             
             # Create messages for the beta parse endpoint
             messages = self._create_messages(prompt, system_message, images)
@@ -324,7 +324,7 @@ class OpenAIHelper:
                     user=user,
                 )
             except Exception as e:
-                log.warning(f"[OpenAIHelper] Beta parse endpoint failed: {e}. Falling back to standard endpoint.")
+                log.warning(f"Beta parse endpoint failed: {e}. Falling back to standard endpoint.")
                 # Fall back to the standard approach if the beta endpoint fails
                 pass
 
@@ -375,7 +375,7 @@ class OpenAIHelper:
             k: v for k, v in completion_params.items() if v is not NOT_GIVEN
         }
 
-        log.info("[OpenAIHelper] Sending completion request to OpenAI API")
+        log.debug("Sending completion request to OpenAI API")
 
         response: Any = self.client.chat.completions.create(**completion_params)
 
@@ -473,7 +473,7 @@ class OpenAIHelper:
             A ParsedChatCompletion object containing the structured response.
             The parsed data can be accessed via completion.choices[0].message.parsed
         """
-        log.fine("[OpenAIHelper] create_structured_chat_completion")
+        log.debug("create_structured_chat_completion")
         
         # Ensure the beta module is available
         if not (hasattr(self.client, 'beta') and 
@@ -510,7 +510,7 @@ class OpenAIHelper:
         # Filter out NotGiven values
         parse_params = {k: v for k, v in parse_params.items() if v is not NOT_GIVEN}
         
-        log.info("[OpenAIHelper] Sending structured completion request to OpenAI API")
+        log.debug("Sending structured completion request to OpenAI API")
         
         # Call the parse endpoint
         return self.client.beta.chat.completions.parse(**parse_params)
