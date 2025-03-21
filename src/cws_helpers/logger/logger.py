@@ -1,13 +1,16 @@
 import os
 import logging
+import inspect
+import shutil
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Flag to toggle detailed console output
-DETAILED_CONSOLE_OUTPUT = bool(os.getenv("DETAILED_CONSOLE_OUTPUT", False))
+# Flag to toggle context information in console output
+# Options: "none", "function", "class_function", "full"
+CONTEXT_DISPLAY = os.getenv("CONTEXT_DISPLAY", "none")
 
 # ------------------------------------------------------
 #                 Define the FINE level
@@ -60,15 +63,106 @@ class ConsoleFormatter(logging.Formatter):
         logging.CRITICAL: "\x1b[31;1mCRITICAL\x1b[0m: %(message)s",  # Bold Red Level
     }
 
+    def get_context_info(self, record):
+        """
+        Extract context information (file, class, function) for the log record.
+        
+        Returns formatted context string based on CONTEXT_DISPLAY setting.
+        """
+        # Default - no context
+        if CONTEXT_DISPLAY == "none":
+            return ""
+            
+        # Start with empty context parts
+        context_parts = []
+        
+        # Get the calling frame
+        frame = inspect.currentframe()
+        # Go back through the call stack to find the actual logging call
+        # Skip logging internal functions
+        found_logging_call = False
+        while frame:
+            frame_info = inspect.getframeinfo(frame)
+            frame_name = frame_info.function
+            frame_module = frame_info.filename
+            
+            # Skip logging module frames
+            if 'logging' in frame_module and frame_name in ('_log', 'debug', 'info', 'warning', 'error', 'critical', 'fine', 'step', 'success'):
+                found_logging_call = True
+            elif found_logging_call:
+                # This is likely the actual calling frame
+                break
+                
+            frame = frame.f_back
+            
+        if not frame:
+            return ""  # Couldn't determine context
+            
+        # Extract context information from the frame
+        frame_info = inspect.getframeinfo(frame)
+        module_path = frame_info.filename
+        module_name = Path(module_path).name
+        function_name = frame_info.function
+        line_number = frame_info.lineno
+        
+        # Try to determine class name if it's a method call
+        class_name = None
+        if 'self' in frame.f_locals:
+            try:
+                class_name = frame.f_locals['self'].__class__.__name__
+            except (AttributeError, KeyError):
+                pass
+                
+        # Format context based on display setting
+        if CONTEXT_DISPLAY == "function":
+            if function_name != "<module>":
+                context_parts.append(f"{function_name}()")
+                
+        elif CONTEXT_DISPLAY == "class_function":
+            if class_name:
+                context_parts.append(f"{class_name}.{function_name}()")
+            elif function_name != "<module>":
+                context_parts.append(f"{function_name}()")
+                
+        elif CONTEXT_DISPLAY == "full":
+            if class_name:
+                context_parts.append(f"{class_name}.{function_name}() in {module_name}:{line_number}")
+            elif function_name != "<module>":
+                context_parts.append(f"{function_name}() in {module_name}:{line_number}")
+            else:
+                context_parts.append(f"{module_name}:{line_number}")
+        
+        # Combine the context parts
+        if context_parts:
+            return f"\x1b[90m[{' '.join(context_parts)}]\x1b[0m"  # Grey color for context
+        return ""
+
     def format(self, record):
         log_fmt = self.level_formats.get(record.levelno, "%(levelname)s: %(message)s")
         if record.levelno == SUCCESS_LEVEL:
             # Add a separator line before SUCCESS messages
             log_fmt = "\n\x1b[32m" + "─" * 80 + "\x1b[0m\n" + log_fmt + "\n"
-        elif DETAILED_CONSOLE_OUTPUT:
-            log_fmt += "\t(%(filename)s:%(lineno)d)\t%(asctime)s"
+            
+        # Format the main message
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
-        return formatter.format(record)
+        formatted_message = formatter.format(record)
+        
+        # Get context info if enabled
+        if CONTEXT_DISPLAY != "none":
+            context_info = self.get_context_info(record)
+            if context_info:
+                # Get terminal width
+                try:
+                    terminal_width = shutil.get_terminal_size().columns
+                except (AttributeError, ValueError):
+                    terminal_width = 80  # Default if can't determine
+                
+                # Format with context info right-aligned
+                message_length = len(formatted_message.strip('\x1b[]0123456789;m'))  # Strip ANSI codes
+                padding = max(1, terminal_width - message_length - len(context_info.strip('\x1b[]0123456789;m')) - 2)
+                formatted_message = f"{formatted_message}{' ' * padding}{context_info}"
+                
+        return formatted_message
 
 # ------------------------------------------------------
 #              Define detailed log format

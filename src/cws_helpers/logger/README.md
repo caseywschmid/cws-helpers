@@ -6,8 +6,9 @@ The `cws_helpers.logger` module provides an enhanced logging system with custom 
 
 - **Custom log levels** (FINE, STEP, SUCCESS) in addition to standard Python log levels
 - **Colored console output** with level-specific formatting
+- **Contextual logging** that automatically shows file, class, and function information
 - **Detailed file logging** with rotation
-- **Environment variable configuration** for log levels and output detail
+- **Environment variable configuration** for log levels and context display options
 - **Simple API** to quickly set up logging in any module
 
 ## Installation
@@ -149,13 +150,17 @@ def configure_logging(
 The logger respects the following environment variables:
 
 - `LOG_LEVEL`: Numeric log level (default: 15 for FINE)
-- `DETAILED_CONSOLE_OUTPUT`: If set to a truthy value, adds file and line information to console output
+- `CONTEXT_DISPLAY`: Controls how contextual information is displayed in logs:
+  - `none`: No contextual information (default)
+  - `function`: Shows only the function name - `[function_name()]`
+  - `class_function`: Shows class and function name - `[ClassName.function_name()]`
+  - `full`: Shows complete context - `[ClassName.function_name() in module.py:42]`
 
 Example `.env` file:
 
 ```
 LOG_LEVEL=10
-DETAILED_CONSOLE_OUTPUT=true
+CONTEXT_DISPLAY=class_function
 ```
 
 ## Colored Console Output
@@ -257,19 +262,54 @@ logger = setup_logger(__name__)
 logger.info("Module initialized")
 ```
 
+## Contextual Logging
+
+The logger can automatically include contextual information about where each log message originates, eliminating the need to manually add this information to your log messages.
+
+This feature is controlled by the `CONTEXT_DISPLAY` environment variable:
+
+```python
+# Instead of manually typing context:
+log.info("[UserService] Creating new user...")
+
+# With CONTEXT_DISPLAY=class_function, this is automatic:
+log.info("Creating new user...")  # Will show: INFO:   Creating new user...           [UserService.create_user()]
+```
+
+The contextual information is right-aligned in the terminal for cleaner presentation while preserving all relevant details.
+
+### Contextual Display Options
+
+1. **Function name only**:
+   ```
+   INFO:   Processing data...                      [process_data()]
+   ```
+
+2. **Class and function name**:
+   ```
+   INFO:   User created...                         [UserService.create_user()]
+   ```
+
+3. **Full context** (including file and line number):
+   ```
+   INFO:   Connecting to database...               [DatabaseManager.connect() in database.py:42]
+   ```
+
 ## Tips and Best Practices
 
 1. **Use the right level**: Reserve DEBUG for very detailed messages, use FINE for detailed but less verbose logging, INFO for general progress, and so on.
 
 2. **Be specific in log messages**: Include relevant details but avoid sensitive information.
 
-3. **Use structured logging**: For complex data, consider formatting as JSON or using string templates:
+3. **Use contextual logging**: Leverage the `CONTEXT_DISPLAY` environment variable to automatically include source context instead of manually typing it in each log message.
+
+4. **Use structured logging**: For complex data, consider formatting as JSON or using string templates:
 
    ```python
    logger.info(f"User {user_id} performed action {action} on resource {resource_id}")
    ```
 
-4. **Log at the beginning and end of important operations**:
+5. **Log at the beginning and end of important operations**:
 
    ```python
    logger.fine(f"Starting import of file {filename}")
@@ -277,7 +317,7 @@ logger.info("Module initialized")
    logger.success(f"Completed import of {count} records from {filename}")
    ```
 
-5. **Use STEP for workflow tracking**: The STEP level is perfect for indicating major phases of execution:
+6. **Use STEP for workflow tracking**: The STEP level is perfect for indicating major phases of execution:
 
    ```python
    logger.step("Phase 1: Data collection")
@@ -286,7 +326,7 @@ logger.info("Module initialized")
    # ... processing code ...
    ```
 
-6. **Include context in ERROR logs**: Make sure error logs include enough information to diagnose the problem:
+7. **Include context in ERROR logs**: Make sure error logs include enough information to diagnose the problem:
    ```python
    except Exception as e:
        logger.error(f"Failed to process order {order_id}: {str(e)}", exc_info=True)

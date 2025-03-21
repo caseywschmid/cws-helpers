@@ -1,11 +1,16 @@
 import logging
 import pytest
 import io
+import os
+import re
+from unittest.mock import patch
 from cws_helpers.logger import (
     configure_logging,
     FINE_LEVEL,
     STEP_LEVEL,
-    SUCCESS_LEVEL
+    SUCCESS_LEVEL,
+    CONTEXT_DISPLAY,
+    ConsoleFormatter
 )
 
 @pytest.fixture
@@ -78,3 +83,96 @@ def test_log_levels_filtering():
     output = test_handler.stream.getvalue()
     assert "Debug message" not in output
     assert "Info message" in output
+
+class TestClass:
+    """Test class for testing class method context information."""
+    
+    def test_method(self, logger):
+        """Log from a class method to test class context detection."""
+        logger.info("Message from class method")
+        return "test_complete"
+
+@pytest.fixture
+def logger():
+    """Create a logger for testing context display."""
+    # Configure a test logger
+    log = logging.getLogger("test_context")
+    for h in log.handlers[:]:
+        log.removeHandler(h)
+    
+    string_io = io.StringIO()
+    handler = logging.StreamHandler(string_io)
+    # Use our ConsoleFormatter for proper context display
+    handler.setFormatter(ConsoleFormatter())
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    
+    return log
+
+@patch.dict(os.environ, {"CONTEXT_DISPLAY": "function"})
+def test_context_display_function(logger):
+    """Test that function name appears in logs with CONTEXT_DISPLAY=function."""
+    # Reset the CONTEXT_DISPLAY value for the test
+    # We need to patch the imported value directly
+    import cws_helpers.logger.logger as logger_module
+    with patch.object(logger_module, 'CONTEXT_DISPLAY', 'function'):
+        
+        def test_function():
+            logger.info("Test message from function")
+            
+        test_function()
+        
+        # Get the output and check for function name
+        output = logger.handlers[-1].stream.getvalue()
+        assert "Test message from function" in output
+        # The function name should appear in the output
+        assert "test_function" in output
+
+@patch.dict(os.environ, {"CONTEXT_DISPLAY": "class_function"})
+def test_context_display_class_function(logger):
+    """Test that class.function appears in logs with CONTEXT_DISPLAY=class_function."""
+    # Reset the CONTEXT_DISPLAY value for the test
+    import cws_helpers.logger.logger as logger_module
+    with patch.object(logger_module, 'CONTEXT_DISPLAY', 'class_function'):
+        
+        test_obj = TestClass()
+        test_obj.test_method(logger)
+        
+        # Get the output and check for class.function format
+        output = logger.handlers[-1].stream.getvalue()
+        assert "Message from class method" in output
+        # The class and method names should appear in the output
+        assert "TestClass.test_method" in output
+
+@patch.dict(os.environ, {"CONTEXT_DISPLAY": "full"})
+def test_context_display_full(logger):
+    """Test that full context appears in logs with CONTEXT_DISPLAY=full."""
+    # Reset the CONTEXT_DISPLAY value for the test
+    import cws_helpers.logger.logger as logger_module
+    with patch.object(logger_module, 'CONTEXT_DISPLAY', 'full'):
+        
+        logger.info("Test message with full context")
+        
+        # Get the output and check for file and line information
+        output = logger.handlers[-1].stream.getvalue()
+        assert "Test message with full context" in output
+        
+        # Check for file name and line number format with a regex
+        # The pattern looks for [something with test_logger.py:NUMBER]
+        context_pattern = r'\[.*test_logger\.py:\d+\]'
+        assert re.search(context_pattern, output), f"Output didn't match pattern. Output: {output}"
+
+@patch.dict(os.environ, {"CONTEXT_DISPLAY": "none"})
+def test_context_display_none(logger):
+    """Test that no context appears in logs with CONTEXT_DISPLAY=none."""
+    # Reset the CONTEXT_DISPLAY value for the test
+    import cws_helpers.logger.logger as logger_module
+    with patch.object(logger_module, 'CONTEXT_DISPLAY', 'none'):
+        
+        logger.info("Test message with no context")
+        
+        # Get the output and check that there's no context bracket
+        output = logger.handlers[-1].stream.getvalue()
+        assert "Test message with no context" in output
+        # No context brackets should appear - we check specifically for our grey context formatting
+        assert "\x1b[90m[" not in output  # No grey context bracket
