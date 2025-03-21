@@ -65,6 +65,38 @@ This creates a `.venv` folder in your project directory.
 
 For more information, see [Managing environments](https://python-poetry.org/docs/managing-environments/).
 
+### VS Code Integration
+
+To automatically activate the Poetry environment in VS Code:
+
+1. **Auto-detection**: VS Code's Python extension should automatically detect Poetry environments.
+
+2. **Find Poetry environment path**: First, determine the path to your Poetry environment:
+
+```bash
+poetry env info --path
+```
+
+3. **Manual configuration**: Create or edit `.vscode/settings.json` in your project with the path from the previous step:
+
+```json
+{
+    "python.defaultInterpreterPath": "/path/to/poetry/virtualenv/bin/python",
+    "python.poetryPath": "poetry",
+    "python.terminal.activateEnvironment": true
+}
+```
+
+If you've configured Poetry to use in-project virtual environments, you can use:
+
+```json
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.poetryPath": "poetry",
+    "python.terminal.activateEnvironment": true
+}
+```
+
 ## Understanding the Lock File
 
 The `poetry.lock` file is crucial for reproducible builds:
@@ -122,4 +154,4 @@ poetry install -v
 
 - [Official Poetry Documentation](https://python-poetry.org/docs/)
 - [Poetry GitHub Repository](https://github.com/python-poetry/poetry)
-- [Python Packaging User Guide](https://packaging.python.org/) 
+- [Python Packaging User Guide](https://packaging.python.org/)

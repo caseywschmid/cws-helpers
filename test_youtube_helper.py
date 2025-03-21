@@ -19,7 +19,7 @@ def test_youtube_helper():
     urls = [
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  # Rick Astley - Never Gonna Give You Up
         "https://www.youtube.com/watch?v=jNQXAC9IVRw",  # Me at the zoo (first YouTube video)
-        "https://www.youtube.com/watch?v=aqz-KE-bpKQ",  # Big Buck Bunny (known to have captions)
+        "https://youtu.be/i2WIbFfH5cs?si=zmcLXc1F2QyNDZsB",  # Big Buck Bunny (known to have captions)
     ]
     
     for url in urls:
