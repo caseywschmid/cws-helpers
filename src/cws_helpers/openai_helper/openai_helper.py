@@ -83,7 +83,7 @@ class OpenAIHelper:
     def check_dependency_versions(self):
         """
         Check if the installed OpenAI package version is compatible with this helper.
-        Logs a warning if the versions don't match.
+        Logs a warning if the versions aren't compatible.
         """
         current_openai_version = version("openai")
         # Check if the warning should be muted
@@ -92,8 +92,19 @@ class OpenAIHelper:
             "1",
             "t",
         )
+        
+        # Use version comparison to check for compatibility
+        # This assumes versions following semantic versioning (major.minor.patch)
+        current_parts = [int(p) for p in current_openai_version.split(".")]
+        base_parts = [int(p) for p in OPENAI_VERSION.split(".")]
+        
+        # Compare major version - must be the same
+        is_compatible = current_parts[0] == base_parts[0]
+        # For minor version, current should be >= base version
+        if is_compatible and len(current_parts) > 1 and len(base_parts) > 1:
+            is_compatible = current_parts[1] >= base_parts[1]
 
-        if not mute_warning and current_openai_version != OPENAI_VERSION:
+        if not mute_warning and not is_compatible:
             log.warning(
                 f"The 'OpenAIHelper' tool was created using openai version {OPENAI_VERSION}. The version you have installed in this project ({current_openai_version}) may not be compatible with this tool. If you encounter any issues, either downgrade your OpenAI version to {OPENAI_VERSION} or email the creator at caseywschmid@gmail.com to have the package updated."
             )

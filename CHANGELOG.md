@@ -5,6 +5,13 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2025-03-23
+
+### Changed
+- Updated OpenAI dependency to use version constraint `^1.65.5` instead of fixed version `1.65.5` to allow compatibility with newer versions
+- Enhanced version compatibility checking in OpenAIHelper to support semantic versioning principles
+- Improved logging around version compatibility warnings
+
 ## [0.9.1] - 2025-03-21
 
 ### Fixed
