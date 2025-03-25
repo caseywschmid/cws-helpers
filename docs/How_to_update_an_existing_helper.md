@@ -285,29 +285,7 @@ When updating a helper, you need to increment the package version according to s
 - **MINOR** (0.1.0 → 0.2.0): For backward-compatible new features
 - **MAJOR** (0.1.0 → 1.0.0): For breaking changes
 
-### 2. Update the Version in `__init__.py`
-
-```python
-# src/cws_helpers/__init__.py
-"""CWS Helpers - Collection of utility helpers for personal projects."""
-
-__version__ = "0.4.0"  # Update this version number
-
-# For convenient imports
-from .logger import configure_logging
-from .helper_name import HelperClass
-```
-
-### 3. Update the Version in `pyproject.toml`
-
-```toml
-[tool.poetry]
-name = "cws-helpers"
-version = "0.4.0"  # Update this version number
-description = "Collection of helper utilities for personal projects"
-```
-
-### 4. Update the CHANGELOG.md
+### 2. Update the CHANGELOG.md
 
 Add an entry for the new version in the CHANGELOG.md file:
 
@@ -328,35 +306,48 @@ Add an entry for the new version in the CHANGELOG.md file:
 [0.4.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.3.0...v0.4.0
 ```
 
+Make sure to:
+- Use today's date in the YYYY-MM-DD format
+- Include appropriate sections (Added, Changed, Fixed, etc.)
+- Add a comparison link at the bottom
+- Be specific about which helper was changed and what changes were made
+
 ## Creating a Release
 
-Once your changes are complete and tested, it's time to create a release.
+Once your changes are complete, tested, and documented, it's time to create a release.
 
-### 1. Commit Your Changes
+### 1. Ensure Tests Pass
 
-```bash
-git add .
-git commit -m "Update helper_name with new features"
-```
-
-### 2. Create a Tag for the New Version
+Run the tests to make sure everything is working correctly:
 
 ```bash
-git tag -a v0.4.0 -m "Version 0.4.0 - Updated helper_name"
+poetry run pytest
+# Or to run tests for a specific helper:
+poetry run pytest tests/helper_name/
 ```
 
-### 3. Push the Changes and Tag
+### 2. Use the Release Script
+
+The project includes a release script that automates updating version numbers, creating a git tag, and pushing changes:
 
 ```bash
-git push origin update-helper-name
-git push origin v0.4.0
+# Run from the project root directory
+./scripts/release.sh <version> "<commit_message>"
+
+# Example:
+./scripts/release.sh 0.4.0 "Update helper_name with new features"
 ```
 
-### 4. Create a Pull Request
+This script will:
+- Update the version in `src/cws_helpers/__init__.py`
+- Update the version in `pyproject.toml`
+- Commit these changes with the provided message
+- Create a git tag for the new version
+- Push the changes and tag to GitHub
 
-If you're working in a branch, create a pull request to merge your changes into the main branch.
+> **IMPORTANT**: Always update the CHANGELOG.md file manually BEFORE running the release script.
 
-### 5. Create a GitHub Release
+### 3. Create a GitHub Release
 
 1. Go to the GitHub repository
 2. Navigate to "Releases"

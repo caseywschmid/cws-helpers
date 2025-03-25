@@ -164,29 +164,7 @@ cws-helpers/
 
 When adding a new helper or making significant changes, you should update the package version following semantic versioning principles:
 
-1. **Update the version number in BOTH locations**:
-   
-   a. In `pyproject.toml`:
-   ```toml
-   [tool.poetry]
-   name = "cws-helpers"
-   version = "0.1.1"  # Increment appropriately
-   ```
-   
-   b. In `src/cws_helpers/__init__.py`:
-   ```python
-   __version__ = "0.1.1"  # Increment appropriately
-   ```
-
-   > **IMPORTANT**: Always ensure that the version numbers in `pyproject.toml` and `__init__.py` match exactly. 
-   > Poetry uses the version in `pyproject.toml` when building the package, while the version in `__init__.py` 
-   > is what's reported at runtime. Mismatched versions will cause confusion and installation issues.
-
-   - Increment PATCH (0.1.0 → 0.1.1) for bug fixes and minor changes
-   - Increment MINOR (0.1.0 → 0.2.0) for new features (like adding a new helper)
-   - Increment MAJOR (0.1.0 → 1.0.0) for breaking changes
-
-2. **Update the CHANGELOG.md** file:
+1. **Update the CHANGELOG.md** file:
    ```markdown
    ## [0.1.1] - YYYY-MM-DD
    
@@ -209,20 +187,23 @@ When adding a new helper or making significant changes, you should update the pa
    - Only include sections that have changes
    - A comparison link at the bottom to see all changes between versions
 
-3. **Create a Git tag** for the new version:
-   ```bash
-   git tag -a v0.1.1 -m "Added new helper: your_new_helper"
-   git push origin v0.1.1
-   ```
-
-4. **Verify version consistency** before pushing:
-   ```bash
-   # Check version in pyproject.toml
-   grep "version" pyproject.toml
+2. **Use the release script to update version numbers and create a tag**:
    
-   # Check version in __init__.py
-   grep "__version__" src/cws_helpers/__init__.py
+   The project includes a release script that automates updating version numbers, creating a git tag, and pushing changes:
+   
+   ```bash
+   # Run from the project root directory
+   ./scripts/release.sh 0.1.1 "Added new helper: your_new_helper"
    ```
+   
+   This script will:
+   - Update the version in `src/cws_helpers/__init__.py`
+   - Update the version in `pyproject.toml`
+   - Commit these changes with the provided message
+   - Create a git tag for the new version
+   - Push the changes and tag to GitHub
+   
+   > **IMPORTANT**: Always update the CHANGELOG.md file manually BEFORE running the release script.
 
 This versioning allows users to pin to specific versions in their requirements.txt:
 ```
