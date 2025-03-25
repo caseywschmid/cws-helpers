@@ -76,4 +76,24 @@ class TestAIModel:
         
         # Test passing an actual enum
         assert AIModel.get_token_param_name(AIModel.O3_MINI) == "max_completion_tokens"
-        assert AIModel.get_token_param_name(AIModel.GPT_4) == "max_tokens" 
+        assert AIModel.get_token_param_name(AIModel.GPT_4) == "max_tokens"
+
+    def test_get_unsupported_parameters(self):
+        """Test getting unsupported parameters for different models."""
+        # Test models with known unsupported parameters
+        assert "temperature" in AIModel.get_unsupported_parameters("o3-mini")
+        assert "top_p" in AIModel.get_unsupported_parameters("o1")
+        assert "parallel_tool_calls" in AIModel.get_unsupported_parameters("o1-mini")
+        
+        # Test using enum values
+        assert "temperature" in AIModel.get_unsupported_parameters(AIModel.O3_MINI)
+        assert "top_p" in AIModel.get_unsupported_parameters(AIModel.O1)
+        
+        # Test models with pattern matching (o-series)
+        assert "temperature" in AIModel.get_unsupported_parameters("o3-2024-05-13")
+        assert "top_p" in AIModel.get_unsupported_parameters("o1-preview")
+        
+        # Test models that should support all parameters
+        assert len(AIModel.get_unsupported_parameters("gpt-4")) == 0
+        assert len(AIModel.get_unsupported_parameters("gpt-3.5-turbo")) == 0
+        assert len(AIModel.get_unsupported_parameters(AIModel.GPT_4_TURBO)) == 0 

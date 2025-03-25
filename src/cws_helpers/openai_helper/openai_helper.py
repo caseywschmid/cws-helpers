@@ -143,6 +143,44 @@ class OpenAIHelper:
             is_o_model = model.startswith("o") or "o1-" in model or "o3-" in model or "o-" in model or "gpt-4o" in model
             return "max_completion_tokens" if is_o_model else "max_tokens"
 
+    def _filter_unsupported_parameters(self, params: Dict[str, Any], model: str) -> Dict[str, Any]:
+        """
+        Filter out parameters that are not supported by the specified model.
+        
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Dictionary of parameters to filter
+        model : str
+            The model name to check against
+            
+        Returns
+        -------
+        Dict[str, Any]
+            Filtered parameters dictionary with unsupported parameters removed
+        """
+        if USE_AI_MODEL_ENUM:
+            # Use AIModel enum to get unsupported parameters
+            unsupported_params = AIModel.get_unsupported_parameters(model)
+        else:
+            # Fallback for when AIModel enum is not available
+            unsupported_params = set()
+            # Simple check for o-series models
+            is_o_model = model.startswith("o") or "o1-" in model or "o3-" in model or "o-" in model
+            if is_o_model:
+                # These parameters are known to be unsupported by o-series models
+                unsupported_params = {"temperature", "top_p", "parallel_tool_calls"}
+        
+        # Remove unsupported parameters
+        filtered_params = params.copy()
+        for param in unsupported_params:
+            if param in filtered_params:
+                # Log a warning that we're removing an unsupported parameter
+                log.warning(f"Parameter '{param}' is not supported by model '{model}'. Removing it from the request.")
+                filtered_params.pop(param)
+        
+        return filtered_params
+
     def create_chat_completion(
         self,
         prompt: str,
@@ -431,6 +469,9 @@ class OpenAIHelper:
             k: v for k, v in completion_params.items() if v is not NOT_GIVEN
         }
 
+        # Filter out unsupported parameters
+        completion_params = self._filter_unsupported_parameters(completion_params, model)
+
         log.debug(f"Sending completion request to OpenAI API with params: {completion_params}")
 
         try:
@@ -598,6 +639,9 @@ class OpenAIHelper:
         
         # Filter out NotGiven values
         parse_params = {k: v for k, v in parse_params.items() if v is not NOT_GIVEN}
+        
+        # Filter out unsupported parameters
+        parse_params = self._filter_unsupported_parameters(parse_params, model)
         
         log.debug("Sending structured completion request to OpenAI API")
         

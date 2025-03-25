@@ -5,6 +5,20 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2025-04-02
+
+### Added
+- Enhanced OpenAI Helper with model-specific parameter compatibility:
+  - Added `get_unsupported_parameters` method to AIModel to identify parameters not supported by specific models
+  - Added automatic parameter filtering in API calls based on model compatibility
+  - Added comprehensive test suite for parameter compatibility
+  - Updated documentation with examples of model-specific parameter handling
+
+### Fixed
+- Fixed error when using temperature parameter with o3-mini and o1 models by automatically filtering it out
+- Fixed error when using top_p parameter with o3-mini and o1 models by automatically filtering it out
+- Fixed error when using parallel_tool_calls parameter with o3-mini and o1 models by automatically filtering it out
+
 ## [0.10.0] - 2025-04-01
 
 ### Added
@@ -277,6 +291,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.10.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.9.2...v0.10.0
 [0.9.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/caseywschmid/cws-helpers/compare/v0.7.3...v0.7.4

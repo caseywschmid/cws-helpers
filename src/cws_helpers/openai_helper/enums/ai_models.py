@@ -210,6 +210,40 @@ class AIModel(Enum):
         else:
             log.debug(f"Model {model_str} is not in the 'o' series, using max_tokens")
             return "max_tokens"
+            
+    @classmethod
+    def get_unsupported_parameters(cls, model_name: Union[str, 'AIModel']) -> Set[str]:
+        """
+        Get the set of parameters that are unsupported by a specific model.
+        
+        Args:
+            model_name: Name of the model (string or AIModel enum)
+            
+        Returns:
+            Set[str]: Set of parameter names that are unsupported by the model
+        """
+        # Convert to string if it's an enum
+        if isinstance(model_name, AIModel):
+            model_str = model_name.value
+        elif isinstance(model_name, Enum):
+            try:
+                model_str = model_name.value
+            except AttributeError:
+                model_str = str(model_name)
+        else:
+            model_str = str(model_name)
+        
+        # Check our dictionary of known unsupported parameters
+        if model_str in cls.UNSUPPORTED_PARAMETERS:
+            return cls.UNSUPPORTED_PARAMETERS[model_str]
+        
+        # For O-series models not explicitly in our dictionary, check by name pattern
+        if any(o_model in model_str for o_model in ["o3-", "o1-"]) or model_str in ["o1", "o3"]:
+            # By default, assume o-series reasoning models don't support temperature and top_p
+            return {"temperature", "top_p", "parallel_tool_calls"}
+        
+        # Default for models we don't have specific information about
+        return set()
 
 # Initialize class variables for AIModel
 AIModel.STRUCTURED_OUTPUT_MODELS = {
@@ -226,4 +260,11 @@ AIModel.COMPLETION_TOKEN_MODELS = {
     "o1-mini",
     "gpt-4o",
     "gpt-4o-mini"
+}
+
+# Dictionary mapping models to their unsupported parameters
+AIModel.UNSUPPORTED_PARAMETERS = {
+    "o3-mini": {"temperature", "top_p", "parallel_tool_calls"},
+    "o1": {"temperature", "top_p", "parallel_tool_calls"},
+    "o1-mini": {"temperature", "top_p", "parallel_tool_calls"},
 }

@@ -11,8 +11,9 @@ This module contains tests for the OpenAIHelper class, including:
 
 import os
 import pytest
-from unittest.mock import patch, MagicMock
-from cws_helpers.openai_helper import OpenAIHelper
+from unittest.mock import patch, MagicMock, ANY
+from openai._types import NOT_GIVEN
+from cws_helpers.openai_helper import OpenAIHelper, AIModel
 import json
 import base64
 
@@ -378,3 +379,142 @@ def test_json_parsing_error():
         
         # Verify errors were logged
         assert mock_log.error.call_count == 2
+
+
+class TestOpenAIHelper:
+    """Tests for the OpenAIHelper class."""
+    
+    def test_filter_unsupported_parameters(self):
+        """Test filtering unsupported parameters based on the model."""
+        helper = OpenAIHelper(api_key="test_key", organization="test_org")
+        
+        # Test o3-mini with unsupported parameters
+        params = {
+            "model": "o3-mini",
+            "messages": [{"role": "user", "content": "Hello"}],
+            "temperature": 0.7,
+            "top_p": 1.0,
+            "max_tokens": 100,
+            "parallel_tool_calls": True
+        }
+        
+        filtered_params = helper._filter_unsupported_parameters(params, "o3-mini")
+        
+        # Check that unsupported parameters were removed
+        assert "temperature" not in filtered_params
+        assert "top_p" not in filtered_params
+        assert "parallel_tool_calls" not in filtered_params
+        
+        # Check that supported parameters remain
+        assert "model" in filtered_params
+        assert "messages" in filtered_params
+        assert "max_tokens" in filtered_params
+        
+        # Test with gpt-4 which should support all parameters
+        params = {
+            "model": "gpt-4",
+            "messages": [{"role": "user", "content": "Hello"}],
+            "temperature": 0.7,
+            "top_p": 1.0,
+            "max_tokens": 100
+        }
+        
+        filtered_params = helper._filter_unsupported_parameters(params, "gpt-4")
+        
+        # Check that all parameters remain for gpt-4
+        assert "temperature" in filtered_params
+        assert "top_p" in filtered_params
+        assert "max_tokens" in filtered_params
+        assert "model" in filtered_params
+        assert "messages" in filtered_params
+
+    def test_create_chat_completion_with_unsupported_parameters(self):
+        """Test that create_chat_completion filters out unsupported parameters for specific models."""
+        helper = OpenAIHelper(api_key="test_key", organization="test_org")
+        
+        # Mock the OpenAI client's create method
+        mock_create = MagicMock()
+        helper.client = MagicMock()
+        helper.client.chat.completions.create = mock_create
+        
+        # Mock response
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Test response"
+        mock_create.return_value = mock_response
+        
+        # Call create_chat_completion with o3-mini and temperature
+        helper.create_chat_completion(
+            prompt="Hello",
+            model="o3-mini",
+            temperature=0.7,  # This should be filtered out
+            max_completion_tokens=100  # This should be kept
+        )
+        
+        # Check that the create method was called without temperature
+        args, kwargs = mock_create.call_args
+        assert "temperature" not in kwargs
+        assert "max_completion_tokens" in kwargs
+        
+        # For comparison, test with gpt-4 which should keep temperature
+        helper.create_chat_completion(
+            prompt="Hello",
+            model="gpt-4",
+            temperature=0.7,  # This should be kept
+            max_tokens=100  # This should be kept
+        )
+        
+        # Check that the create method was called with temperature
+        args, kwargs = mock_create.call_args
+        assert "temperature" in kwargs
+        assert "max_tokens" in kwargs
+
+    def test_structured_chat_completion_with_unsupported_parameters(self):
+        """Test that create_structured_chat_completion filters out unsupported parameters for specific models."""
+        helper = OpenAIHelper(api_key="test_key", organization="test_org")
+        
+        # Create a simple Pydantic model for testing
+        from pydantic import BaseModel
+        class TestModel(BaseModel):
+            result: str
+        
+        # Mock the beta parse method
+        mock_parse = MagicMock()
+        helper.client = MagicMock()
+        helper.client.beta = MagicMock()
+        helper.client.beta.chat = MagicMock()
+        helper.client.beta.chat.completions = MagicMock()
+        helper.client.beta.chat.completions.parse = mock_parse
+        
+        # Mock response
+        mock_response = MagicMock()
+        mock_parse.return_value = mock_response
+        
+        # First test with o3-mini which should filter out temperature
+        messages = [{"role": "user", "content": "Hello"}]
+        helper.create_structured_chat_completion(
+            messages=messages,
+            model="o3-mini",
+            response_format=TestModel,
+            temperature=0.7,  # This should be filtered out
+            max_completion_tokens=100  # This should be kept
+        )
+        
+        # Check that parse was called without temperature
+        args, kwargs = mock_parse.call_args
+        assert "temperature" not in kwargs
+        assert "max_completion_tokens" in kwargs
+        
+        # For comparison, test with gpt-4 which should keep temperature
+        helper.create_structured_chat_completion(
+            messages=messages,
+            model="gpt-4",
+            response_format=TestModel,
+            temperature=0.7,  # This should be kept
+            max_tokens=100  # This should be kept
+        )
+        
+        # Check that parse was called with temperature
+        args, kwargs = mock_parse.call_args
+        assert "temperature" in kwargs
+        assert "max_tokens" in kwargs

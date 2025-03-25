@@ -65,6 +65,38 @@ The helper automatically handles token parameter selection based on the model us
 
 If an error occurs due to using the wrong token parameter, the helper will automatically retry with the correct parameter.
 
+### Model-Specific Parameter Compatibility
+
+OpenAI's models have different parameter support. The helper automatically filters unsupported parameters based on the model:
+
+```python
+# For o3-mini and o1 models, parameters like temperature and top_p are not supported
+# The helper will automatically remove them and log a warning
+response = helper.create_chat_completion(
+    prompt="What is the capital of France?",
+    model="o3-mini",
+    temperature=0.7,  # This will be automatically filtered out for o3-mini
+    max_completion_tokens=100
+)
+
+# You can check which parameters are unsupported for a specific model
+unsupported_params = AIModel.get_unsupported_parameters("o3-mini")
+print(unsupported_params)  # {'temperature', 'top_p', 'parallel_tool_calls'}
+
+# For other models like gpt-4, all standard parameters are supported
+response = helper.create_chat_completion(
+    prompt="What is the capital of France?",
+    model="gpt-4",
+    temperature=0.7,  # This will be included
+    max_tokens=100
+)
+```
+
+Current unsupported parameters for reasoning models (o3-mini, o1, o1-mini):
+- `temperature`
+- `top_p`
+- `parallel_tool_calls`
+
 ### Using System Messages
 
 System messages help set the behavior of the assistant. They're useful for providing context or instructions to the model.
