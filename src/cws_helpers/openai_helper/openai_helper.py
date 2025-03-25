@@ -35,6 +35,15 @@ from openai._types import NotGiven, NOT_GIVEN
 from openai._streaming import Stream
 from pydantic import BaseModel
 
+# Import AIModel enum if available, with fallback if not
+try:
+    from .enums.ai_models import AIModel
+    USE_AI_MODEL_ENUM = True
+    log.debug("Using AIModel enum for model-specific logic")
+except ImportError:
+    USE_AI_MODEL_ENUM = False
+    log.debug("AIModel enum not available, falling back to hardcoded model checks")
+
 # Import beta chat completions for structured outputs
 try:
     from openai.types.chat.parsed_chat_completion import ParsedChatCompletion
@@ -47,8 +56,7 @@ except ImportError:
 ResponseFormatT = TypeVar('ResponseFormatT')
 
 # The version this helper was developed with
-OPENAI_VERSION = "1.65.5"
-
+OPENAI_VERSION = "1.68.2"
 
 class OpenAIHelper:
     """
@@ -111,6 +119,29 @@ class OpenAIHelper:
             log.info(
                 "This warning can be muted by setting the MUTE_OPENAI_HELPER_WARNING environment variable to 'True'."
             )
+            
+    def _get_token_param_name(self, model: str) -> str:
+        """
+        Determine which token parameter to use based on the model.
+        Uses AIModel enum if available, otherwise falls back to hardcoded checks.
+        
+        Parameters
+        ----------
+        model : str
+            The model name to check
+            
+        Returns
+        -------
+        str
+            Either 'max_tokens' or 'max_completion_tokens' depending on the model
+        """
+        if USE_AI_MODEL_ENUM:
+            # Use AIModel enum's logic
+            return AIModel.get_token_param_name(model)
+        else:
+            # Fallback to hardcoded checks
+            is_o_model = model.startswith("o") or "o1-" in model or "o3-" in model or "o-" in model or "gpt-4o" in model
+            return "max_completion_tokens" if is_o_model else "max_tokens"
 
     def create_chat_completion(
         self,
@@ -128,6 +159,7 @@ class OpenAIHelper:
         stream: bool = False,
         json_mode: bool = False,
         max_tokens: Optional[int] | None = 4096,
+        max_completion_tokens: Optional[int] | None = None,
         temperature: Optional[float] | None = 0.7,
         n: Optional[int] | None = 1,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
@@ -206,9 +238,16 @@ class OpenAIHelper:
         max_tokens: The maximum number of [tokens](/tokenizer) that can be
           generated in the chat completion. The total length of input tokens
           and generated tokens is limited by the model's context length.
+          Note: This parameter is not supported by the o-series models (o1, o3-mini).
+          Use `max_completion_tokens` for those models.
           [Example Python
           code](https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken)
           for counting tokens.
+          
+        max_completion_tokens: The maximum number of tokens to generate in the 
+          chat completion. Required for o-series models (o1, o3-mini) that don't
+          support max_tokens. For other models, max_tokens will be used if 
+          max_completion_tokens is not provided.
 
         n: How many chat completion choices to generate for each input
           message. Note that you will be charged based on the number of
@@ -323,6 +362,7 @@ class OpenAIHelper:
                     logit_bias=logit_bias,
                     logprobs=logprobs,
                     max_tokens=max_tokens,
+                    max_completion_tokens=max_completion_tokens,
                     n=n,
                     presence_penalty=presence_penalty,
                     seed=seed,
@@ -353,6 +393,11 @@ class OpenAIHelper:
         # Create the messages
         messages = self._create_messages(prompt, system_message, images)
 
+        # Determine which token parameter to use based on the model
+        token_param_name = self._get_token_param_name(model)
+        tokens_value = max_completion_tokens if token_param_name == "max_completion_tokens" and max_completion_tokens is not None else max_tokens
+        log.debug(f"Using {token_param_name}={tokens_value} for model: {model}")
+
         completion_params = {
             "messages": messages,
             "model": model,
@@ -360,7 +405,6 @@ class OpenAIHelper:
             "frequency_penalty": frequency_penalty,
             "logit_bias": logit_bias,
             "logprobs": logprobs,
-            "max_tokens": max_tokens,
             "n": n,
             "presence_penalty": presence_penalty,
             "response_format": response_format,
@@ -374,6 +418,7 @@ class OpenAIHelper:
             "user": user,
             "stream_options": stream_options,
             "modality": modality,
+            token_param_name: tokens_value,  # Use the appropriate token parameter
         }
 
         # Filter out None values
@@ -386,9 +431,32 @@ class OpenAIHelper:
             k: v for k, v in completion_params.items() if v is not NOT_GIVEN
         }
 
-        log.debug("Sending completion request to OpenAI API")
+        log.debug(f"Sending completion request to OpenAI API with params: {completion_params}")
 
-        response: Any = self.client.chat.completions.create(**completion_params)
+        try:
+            response: Any = self.client.chat.completions.create(**completion_params)
+        except Exception as e:
+            # Log the error
+            log.error(f"Error in OpenAI API call: {e}")
+            
+            # Check if the error is related to max_tokens vs max_completion_tokens
+            error_str = str(e)
+            if "max_tokens" in error_str and "max_completion_tokens" in error_str:
+                log.warning("Detected error related to token parameter. Attempting to fix...")
+                
+                # Swap the token parameter
+                other_param = "max_completion_tokens" if token_param_name == "max_tokens" else "max_tokens"
+                if token_param_name in completion_params:
+                    tokens_value = completion_params.pop(token_param_name)
+                    completion_params[other_param] = tokens_value
+                    log.debug(f"Retrying with {other_param}={tokens_value}")
+                    response = self.client.chat.completions.create(**completion_params)
+                else:
+                    # If neither parameter is in the dictionary, re-raise the error
+                    raise
+            else:
+                # Re-raise the error if it's not related to token parameters
+                raise
 
         # Handle streaming responses
         if stream:
@@ -424,6 +492,7 @@ class OpenAIHelper:
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
         max_tokens: Optional[int] | None = 4096,
+        max_completion_tokens: Optional[int] | None = None,
         n: Optional[int] | None = 1,
         presence_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         seed: Optional[int] | NotGiven = NOT_GIVEN,
@@ -455,6 +524,10 @@ class OpenAIHelper:
         logprobs: Whether to return log probabilities of the output tokens or not.
         
         max_tokens: The maximum number of tokens that can be generated in the chat completion.
+          Note: Not supported by o-series models.
+          
+        max_completion_tokens: The maximum number of tokens to generate in the chat completion.
+          Required for o-series models (o1, o3-mini).
         
         n: How many chat completion choices to generate for each input message.
         
@@ -494,6 +567,11 @@ class OpenAIHelper:
             raise ImportError("The beta.chat.completions.parse endpoint is not available in your OpenAI SDK version. "
                              f"Current version: {version('openai')}. Please upgrade to a newer version.")
         
+        # Determine which token parameter to use based on the model
+        token_param_name = self._get_token_param_name(model)
+        tokens_value = max_completion_tokens if token_param_name == "max_completion_tokens" and max_completion_tokens is not None else max_tokens
+        log.debug(f"Using {token_param_name}={tokens_value} for model: {model}")
+        
         # Prepare parameters for the parse endpoint
         parse_params = {
             "messages": messages,
@@ -502,7 +580,6 @@ class OpenAIHelper:
             "frequency_penalty": frequency_penalty,
             "logit_bias": logit_bias,
             "logprobs": logprobs,
-            "max_tokens": max_tokens,
             "n": n,
             "presence_penalty": presence_penalty,
             "seed": seed,
@@ -513,6 +590,7 @@ class OpenAIHelper:
             "top_logprobs": top_logprobs,
             "top_p": top_p,
             "user": user,
+            token_param_name: tokens_value,  # Use the appropriate token parameter
         }
         
         # Filter out None values
@@ -523,8 +601,28 @@ class OpenAIHelper:
         
         log.debug("Sending structured completion request to OpenAI API")
         
-        # Call the parse endpoint
-        return self.client.beta.chat.completions.parse(**parse_params)
+        try:
+            # Call the parse endpoint
+            return self.client.beta.chat.completions.parse(**parse_params)
+        except Exception as e:
+            # Log the error
+            log.error(f"Error in beta parse endpoint: {e}")
+            
+            # Check if the error is related to max_tokens vs max_completion_tokens
+            error_str = str(e)
+            if "max_tokens" in error_str and "max_completion_tokens" in error_str:
+                log.warning("Detected error related to token parameter in beta parse. Attempting to fix...")
+                
+                # Swap the token parameter
+                other_param = "max_completion_tokens" if token_param_name == "max_tokens" else "max_tokens"
+                if token_param_name in parse_params:
+                    tokens_value = parse_params.pop(token_param_name)
+                    parse_params[other_param] = tokens_value
+                    log.debug(f"Retrying beta parse with {other_param}={tokens_value}")
+                    return self.client.beta.chat.completions.parse(**parse_params)
+            
+            # Re-raise the error
+            raise
 
     def _create_messages(
         self, 

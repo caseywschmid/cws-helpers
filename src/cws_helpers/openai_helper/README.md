@@ -34,6 +34,37 @@ response = helper.create_chat_completion(
 print(response)
 ```
 
+### Using AIModel Enum
+
+The OpenAI Helper provides an AIModel enum for model-specific behavior and improved maintainability:
+
+```python
+from cws_helpers.openai_helper import OpenAIHelper, AIModel
+
+# Check if a model supports structured outputs
+supports_structured = AIModel.supports_structured_outputs(AIModel.GPT_4O)  # True
+supports_structured = AIModel.supports_structured_outputs("gpt-4")         # False
+
+# Get the appropriate token parameter name for a model
+token_param = AIModel.get_token_param_name(AIModel.O3_MINI)  # Returns "max_completion_tokens"
+token_param = AIModel.get_token_param_name("gpt-4")         # Returns "max_tokens"
+
+# Get the provider for a model
+provider = AIModel.get_provider(AIModel.GPT_4_TURBO)  # Returns AIProvider.OPENAI
+
+# Use the enum directly in API calls
+response = helper.create_chat_completion(
+    prompt="What is the capital of France?",
+    model=AIModel.GPT_4.value  # Use .value to get the string representation
+)
+```
+
+The helper automatically handles token parameter selection based on the model used:
+- For "o" series models (o1, o3-mini, gpt-4o), it uses `max_completion_tokens`
+- For other models, it uses `max_tokens`
+
+If an error occurs due to using the wrong token parameter, the helper will automatically retry with the correct parameter.
+
 ### Using System Messages
 
 System messages help set the behavior of the assistant. They're useful for providing context or instructions to the model.
@@ -229,6 +260,7 @@ Creates a chat completion using the specified parameters.
 - `stream`: If True, returns a stream of response chunks instead of a complete response.
 - `json_mode`: If True, ensures the response is valid JSON.
 - `max_tokens`: The maximum number of tokens to generate. Defaults to 4096.
+- `max_completion_tokens`: The maximum number of tokens to generate for "o" series models. If not provided, `max_tokens` is used.
 - `temperature`: Controls randomness. Higher values (e.g., 0.8) make output more random, lower values (e.g., 0.2) make it more focused. Defaults to 0.7.
 - `response_format`: An object specifying the format that the model must output, or a Pydantic model for structured output.
 - `seed`: For deterministic results, provide a seed value.
@@ -251,6 +283,9 @@ Creates a structured chat completion using the beta parse endpoint.
 - `model`: ID of the model to use.
 - `response_format`: A Pydantic model class that defines the structure of the response.
 
+**Optional Parameters:**
+- Same as `create_chat_completion`, with the exception of `prompt`, `system_message`, `images`, and `json_mode`.
+
 **Returns:**
 - A ParsedChatCompletion object containing the structured response.
 
@@ -263,6 +298,87 @@ Static method to encode an image file to base64 for API requests.
 
 **Returns:**
 - Base64-encoded image data as a string
+
+### `AIModel`
+
+Enum representing different AI models supported by the OpenAIHelper.
+
+#### Models
+
+- `GPT_4_5_PREVIEW` - "gpt-4.5-preview"
+- `O3_MINI` - "o3-mini"
+- `O1` - "o1"
+- `O1_MINI` - "o1-mini"
+- `GPT_4O` - "gpt-4o"
+- `GPT_4O_MINI` - "gpt-4o-mini"
+- `GPT_4_TURBO` - "gpt-4-turbo"
+- `GPT_4` - "gpt-4"
+- `GPT_3_5_TURBO` - "gpt-3.5-turbo"
+
+#### `supports_structured_outputs(model_name: Union[str, AIModel]) -> bool`
+
+Checks if a model supports structured outputs.
+
+**Parameters:**
+- `model_name`: Name of the model to check (string or AIModel enum)
+
+**Returns:**
+- Boolean indicating if the model supports structured outputs
+
+#### `get_token_param_name(model_name: Union[str, AIModel]) -> str`
+
+Determines which token parameter name to use based on the model.
+
+**Parameters:**
+- `model_name`: Name of the model (string or AIModel enum)
+
+**Returns:**
+- Either 'max_tokens' or 'max_completion_tokens' depending on the model
+
+#### `get_provider(model_name: Union[str, AIModel]) -> AIProvider`
+
+Gets the provider for a specific model.
+
+**Parameters:**
+- `model_name`: The AIModel or model name string to get the provider for
+
+**Returns:**
+- The AIProvider for the model
+
+#### `from_string(model_name: str) -> AIModel`
+
+Converts a string representation to an AIModel enum value.
+
+**Parameters:**
+- `model_name`: String name of the model
+
+**Returns:**
+- AIModel enum value
+
+**Raises:**
+- ValueError: If the model name is not recognized
+
+### `AIProvider`
+
+Enum representing different AI providers supported by the system.
+
+#### Providers
+
+- `OPENAI` - OpenAI
+- `ANTHROPIC` - Anthropic
+
+#### `from_string(provider_name: str) -> AIProvider`
+
+Converts a string representation to an AIProvider enum value.
+
+**Parameters:**
+- `provider_name`: String name of the provider (case-insensitive)
+
+**Returns:**
+- AIProvider enum value
+
+**Raises:**
+- ValueError: If the provider name is not recognized
 
 ## Version Compatibility
 

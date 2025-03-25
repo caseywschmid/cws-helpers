@@ -5,6 +5,23 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-04-01
+
+### Added
+- Enhanced OpenAI Helper with model-specific logic:
+  - Added AIModel and AIProvider enums for model management
+  - Improved token parameter handling for different model types
+  - Automatic detection and use of appropriate token parameter (max_tokens vs max_completion_tokens)
+  - Added support for the latest "o" series models (o1, o3-mini, gpt-4o)
+  - Added automatic error recovery for token parameter errors
+  - Added model-specific structured output support detection
+  - Added comprehensive tests for all new functionality
+
+### Changed
+- Updated OpenAI dependency to version 1.68.2
+- Improved error handling in OpenAI API calls
+- Enhanced documentation for model-specific features
+
 ## [0.9.2] - 2025-03-23
 
 ### Changed
