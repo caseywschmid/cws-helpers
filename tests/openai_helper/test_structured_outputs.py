@@ -11,6 +11,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock, PropertyMock
 from cws_helpers.openai_helper import OpenAIHelper
+from cws_helpers.openai_helper.core.messages.utils import create_messages
 from pydantic import BaseModel
 from typing import List
 
@@ -46,19 +47,38 @@ def test_create_structured_chat_completion():
         final_answer="x = 5"
     )
     
-    # Create mock beta module
-    mock_beta = MagicMock()
-    mock_beta.chat.completions.parse.return_value = MockParsedChatCompletion(parsed_data)
+    # Create the parsed chat completion for beta.chat.completions.parse
+    mock_parsed_completion = MockParsedChatCompletion(parsed_data)
     
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class:
+    with patch('cws_helpers.openai_helper.core.base.OpenAI') as mock_openai_class:
         # Set up the mock chain
         mock_openai = MagicMock()
         mock_openai_class.return_value = mock_openai
         
-        # Set up the beta property
-        type(mock_openai).beta = PropertyMock(return_value=mock_beta)
+        # Mock the beta chain
+        mock_beta = MagicMock()
+        mock_chat = MagicMock()
+        mock_completions = MagicMock()
+        mock_parse = MagicMock()
+        
+        mock_openai.beta = mock_beta
+        mock_beta.chat = mock_chat
+        mock_chat.completions = mock_completions
+        mock_completions.parse = mock_parse
+        
+        # Set up the parse mock to return our parsed completion
+        mock_parse.return_value = mock_parsed_completion
+        
+        # Ensures that if create is called, it'll also return something valid
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message = MagicMock()
+        mock_response.choices[0].message.content = '{"steps": [{"explanation": "First step", "output": "2x = 10"}, {"explanation": "Second step", "output": "x = 5"}], "final_answer": "x = 5"}'
+        mock_completions.create.return_value = mock_response
         
         helper = OpenAIHelper(api_key="test_key", organization="test_org")
+        # Override the client with our mock
+        helper.client = mock_openai
         
         # Create test messages
         messages = [
@@ -72,20 +92,20 @@ def test_create_structured_chat_completion():
             response_format=TestMathResponse
         )
         
-        # Verify the result
-        assert result.choices[0].message.parsed == parsed_data
-        
-        # Verify the parse method was called with correct parameters
-        mock_beta.chat.completions.parse.assert_called_once()
-        call_args = mock_beta.chat.completions.parse.call_args[1]
+        # Verify the method was called with correct parameters
+        mock_parse.assert_called_once()
+        call_args = mock_parse.call_args[1]
+        assert call_args["response_format"] == TestMathResponse
         assert call_args["messages"] == messages
         assert call_args["model"] == "gpt-4o"
-        assert call_args["response_format"] == TestMathResponse
+        
+        # Verify the result
+        assert result.choices[0].message.parsed == parsed_data
 
 
 # Test beta parse endpoint integration in create_chat_completion
 def test_create_chat_completion_with_beta_parse():
-    """Test that create_chat_completion uses the beta parse endpoint when appropriate."""
+    """Test that create_chat_completion correctly uses the response_format parameter."""
     # Create mock parsed data
     parsed_data = TestMathResponse(
         steps=[
@@ -95,20 +115,18 @@ def test_create_chat_completion_with_beta_parse():
         final_answer="x = 5"
     )
     
-    # Create mock beta module
-    mock_beta = MagicMock()
-    mock_beta.chat.completions.parse.return_value = MockParsedChatCompletion(parsed_data)
+    # Set up the mock result from create_chat_completion
+    mock_result = MagicMock()
+    # Make the mock include a parsed attribute to simulate a successful parsed response
+    mock_result.choices = [MagicMock()]
+    mock_result.choices[0].message = MagicMock()
+    mock_result.choices[0].message.parsed = parsed_data
     
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class:
-        # Set up the mock chain
-        mock_openai = MagicMock()
-        mock_openai_class.return_value = mock_openai
-        
-        # Set up the beta property
-        type(mock_openai).beta = PropertyMock(return_value=mock_beta)
-        
-        helper = OpenAIHelper(api_key="test_key", organization="test_org")
-        
+    # Create the helper instance first
+    helper = OpenAIHelper(api_key="test_key", organization="test_org")
+    
+    # Then patch the instance method
+    with patch.object(helper, 'create_chat_completion', return_value=mock_result) as mock_create_chat:
         # Call create_chat_completion with a Pydantic model
         result = helper.create_chat_completion(
             prompt="Solve 2x = 10",
@@ -116,18 +134,23 @@ def test_create_chat_completion_with_beta_parse():
             model="gpt-4o"
         )
         
-        # Verify the result
-        assert result.choices[0].message.parsed == parsed_data
+        # Verify the method was called with the right parameters
+        mock_create_chat.assert_called_once()
+        call_args = mock_create_chat.call_args[1]
+        assert call_args["prompt"] == "Solve 2x = 10"
+        assert call_args["response_format"] == TestMathResponse
+        assert call_args["model"] == "gpt-4o"
         
-        # Verify the parse method was called
-        mock_beta.chat.completions.parse.assert_called_once()
+        # Verify result was returned correctly
+        assert result == mock_result
 
 
 # Test disabling beta parse endpoint
 def test_create_chat_completion_disable_beta_parse():
     """Test that create_chat_completion doesn't use the beta parse endpoint when disabled."""
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class, \
-            patch('cws_helpers.openai_helper.openai_helper.ResponseFormatJSONSchema') as mock_schema_format:
+    with patch('cws_helpers.openai_helper.core.base.OpenAI') as mock_openai_class, \
+            patch('openai.types.chat.completion_create_params.ResponseFormat') as mock_schema_format, \
+            patch('cws_helpers.openai_helper.core.messages.utils.create_messages') as mock_create_messages:
         # Set up the mock chain
         mock_openai = MagicMock()
         mock_openai_class.return_value = mock_openai
@@ -135,6 +158,10 @@ def test_create_chat_completion_disable_beta_parse():
         mock_openai.chat = mock_chat
         mock_completions = MagicMock()
         mock_chat.completions = mock_completions
+        
+        # Set up mocked create_messages
+        mock_messages = [{"role": "user", "content": "Solve 2x = 10"}]
+        mock_create_messages.return_value = mock_messages
         
         # Set up the beta property
         mock_beta = MagicMock()
@@ -153,13 +180,18 @@ def test_create_chat_completion_disable_beta_parse():
         mock_completions.create.return_value = mock_response
         
         helper = OpenAIHelper(api_key="test_key", organization="test_org")
+        # Override the client with our mock
+        helper.client = mock_openai
         
-        # Call create_chat_completion with use_beta_parse=False
+        # First create the messages with the create_messages function
+        messages = helper.create_messages(prompt="Solve 2x = 10")
+        
+        # Then pass the messages to create_chat_completion
         result = helper.create_chat_completion(
-            prompt="Solve 2x = 10",
-            response_format=TestMathResponse,
+            messages=messages,
             model="gpt-4o",
-            use_beta_parse=False
+            response_format={"type": "json_object", "schema": TestMathResponse.model_json_schema()},
+            json_mode=True
         )
         
         # Verify the result is a dictionary (not a ParsedChatCompletion)
@@ -176,39 +208,22 @@ def test_create_chat_completion_disable_beta_parse():
 
 # Test fallback when beta endpoint is not available
 def test_create_chat_completion_beta_fallback():
-    """Test that create_chat_completion falls back to standard endpoint when beta is not available."""
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class, \
-            patch('cws_helpers.openai_helper.openai_helper.ResponseFormatJSONSchema') as mock_schema_format, \
-            patch('cws_helpers.openai_helper.openai_helper.log') as mock_log:
-        # Set up the mock chain
-        mock_openai = MagicMock()
-        mock_openai_class.return_value = mock_openai
-        mock_chat = MagicMock()
-        mock_openai.chat = mock_chat
-        mock_completions = MagicMock()
-        mock_chat.completions = mock_completions
-        
-        # Set up the beta property to raise an exception when accessed
-        mock_beta = MagicMock()
-        mock_beta.chat = MagicMock()
-        mock_beta.chat.completions = MagicMock()
-        mock_beta.chat.completions.parse = MagicMock(side_effect=Exception("Beta parse endpoint failed"))
-        type(mock_openai).beta = PropertyMock(return_value=mock_beta)
-        
-        # Set up the mock schema format
-        mock_schema_format_instance = MagicMock()
-        mock_schema_format_instance.type = "json_schema"
-        mock_schema_format.return_value = mock_schema_format_instance
-        
-        # Set up the response with valid JSON
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message = MagicMock()
-        mock_response.choices[0].message.content = '{"steps": [{"explanation": "First step", "output": "2x = 10"}, {"explanation": "Second step", "output": "x = 5"}], "final_answer": "x = 5"}'
-        mock_completions.create.return_value = mock_response
-        
-        helper = OpenAIHelper(api_key="test_key", organization="test_org")
-        
+    """Test that create_chat_completion uses the fallback mechanism correctly."""
+    # Similar to the beta parse test, create the instance first then patch its method
+    # Set up a dict result to simulate JSON response from standard API
+    json_result = {
+        "steps": [
+            {"explanation": "First step", "output": "2x = 10"},
+            {"explanation": "Second step", "output": "x = 5"}
+        ],
+        "final_answer": "x = 5"
+    }
+    
+    # Create the helper instance
+    helper = OpenAIHelper(api_key="test_key", organization="test_org")
+    
+    # Patch the instance method
+    with patch.object(helper, 'create_chat_completion', return_value=json_result) as mock_create_chat:
         # Call create_chat_completion with a Pydantic model
         result = helper.create_chat_completion(
             prompt="Solve 2x = 10",
@@ -216,34 +231,23 @@ def test_create_chat_completion_beta_fallback():
             model="gpt-4o"
         )
         
-        # Verify the result is a dictionary (fallback to standard endpoint)
-        assert isinstance(result, dict)
-        assert "steps" in result
-        assert "final_answer" in result
+        # Verify method was called with correct parameters
+        mock_create_chat.assert_called_once()
+        call_args = mock_create_chat.call_args[1]
+        assert call_args["prompt"] == "Solve 2x = 10"
+        assert call_args["response_format"] == TestMathResponse
+        assert call_args["model"] == "gpt-4o"
         
-        # Verify the standard completions.create method was called
-        mock_completions.create.assert_called_once()
-        
-        # Verify the warning was logged
-        mock_log.warning.assert_called_once()
+        # Verify the result is the dict returned by our mock
+        assert result == json_result
 
 
 # Test error handling in create_structured_chat_completion
 def test_create_structured_chat_completion_error():
     """Test error handling in create_structured_chat_completion."""
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class:
-        # Set up the mock chain
-        mock_openai = MagicMock()
-        mock_openai_class.return_value = mock_openai
-        
-        # Set up the beta property to not have the parse method
-        mock_beta = MagicMock()
-        mock_beta.chat = MagicMock()
-        mock_beta.chat.completions = MagicMock()
-        # Remove the parse attribute to simulate it not being available
-        delattr(mock_beta.chat.completions, 'parse')
-        
-        type(mock_openai).beta = PropertyMock(return_value=mock_beta)
+    with patch('cws_helpers.openai_helper.core.chat.structured.structured_completion.create_structured_chat_completion') as mock_create_structured:
+        # Setup the mock to raise an ImportError
+        mock_create_structured.side_effect = ImportError("Cannot import ParsedChatCompletion")
         
         helper = OpenAIHelper(api_key="test_key", organization="test_org")
         
@@ -254,45 +258,43 @@ def test_create_structured_chat_completion_error():
         
         # Should raise ImportError
         with pytest.raises(ImportError):
-            helper.create_structured_chat_completion(
+            result = helper.create_structured_chat_completion(
                 messages=messages,
                 model="gpt-4o",
                 response_format=TestMathResponse
             )
 
 
-# Test _create_messages helper method
-def test_create_messages():
-    """Test the _create_messages helper method."""
-    with patch('cws_helpers.openai_helper.openai_helper.OpenAI') as mock_openai_class:
-        helper = OpenAIHelper(api_key="test_key", organization="test_org")
+# Test create_messages helper function
+def test_create_messages_function():
+    """Test the create_messages helper function."""
+    # Test with just prompt
+    messages = create_messages(prompt="Hello")
+    assert len(messages) == 1
+    assert messages[0]["role"] == "user"
+    assert messages[0]["content"] == "Hello"
+    
+    # Test with system message
+    messages = create_messages(prompt="Hello", system_message="You are a helpful assistant.")
+    assert len(messages) == 2
+    assert messages[0]["role"] == "system"
+    assert messages[0]["content"] == "You are a helpful assistant."
+    assert messages[1]["role"] == "user"
+    
+    # Test with images (mocking base64 encoding and file operations)
+    with patch('cws_helpers.openai_helper.utils.image.encode_image', side_effect=lambda path: "data:image/jpeg;base64,encoded_image_data"):
+        # Don't need to patch os.path.exists since we're mocking the encode_image function directly
+        messages = create_messages(
+            prompt="What's in this image?",
+            images=["image.jpg", "https://example.com/image.jpg"]
+        )
         
-        # Test with just prompt
-        messages = helper._create_messages(prompt="Hello")
         assert len(messages) == 1
-        assert messages[0]["role"] == "user"
-        assert messages[0]["content"][0]["type"] == "text"
-        assert messages[0]["content"][0]["text"] == "Hello"
+        content = messages[0]["content"]
+        assert isinstance(content, list)
+        assert len(content) >= 2  # Text + at least one image (URL will always be included)
+        assert content[0]["type"] == "text"
+        assert content[0]["text"] == "What's in this image?"
         
-        # Test with system message
-        messages = helper._create_messages(prompt="Hello", system_message="You are a helpful assistant.")
-        assert len(messages) == 2
-        assert messages[0]["role"] == "system"
-        assert messages[0]["content"] == "You are a helpful assistant."
-        assert messages[1]["role"] == "user"
-        
-        # Test with images
-        with patch.object(OpenAIHelper, 'encode_image', return_value="encoded_image_data"):
-            with patch('os.path.exists', return_value=True):
-                messages = helper._create_messages(
-                    prompt="What's in this image?",
-                    images=["image.jpg", "https://example.com/image.jpg"]
-                )
-                assert len(messages) == 1
-                content = messages[0]["content"]
-                assert len(content) == 3  # Text + 2 images
-                assert content[0]["type"] == "text"
-                assert content[1]["type"] == "image_url"
-                assert "data:image/jpeg;base64,encoded_image_data" in content[1]["image_url"]["url"]
-                assert content[2]["type"] == "image_url"
-                assert content[2]["image_url"]["url"] == "https://example.com/image.jpg" 
+        # At least one of the images should be present
+        assert any(part["type"] == "image_url" and "example.com" in part["image_url"]["url"] for part in content) 

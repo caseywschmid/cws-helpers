@@ -21,7 +21,8 @@ Usage:
     token_param = AIModel.get_token_param_name("o3-mini")  # Returns "max_completion_tokens"
 """
 
-from .openai_helper import OpenAIHelper
+# Import the main class and enums for backward compatibility
+from .core.base import OpenAIHelper
 from .enums import AIModel, AIProvider
 
 __all__ = ["OpenAIHelper", "AIModel", "AIProvider"]

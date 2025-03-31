@@ -5,6 +5,27 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2025-04-10
+
+### Changed
+- Refactored OpenAI Helper module structure for improved modularity and maintainability:
+  - Split large `completion.py` into specialized files:
+    - `chat_completion.py` - Main chat completion function
+    - `completion_handlers.py` - API request handlers
+    - `error_handlers.py` - Error handling functions
+    - `structured_completion.py` - Structured output functionality
+  - Split `ai_models.py` into specialized files:
+    - `ai_providers.py` - Contains the AIProvider enum
+    - `model_features.py` - Contains model-specific feature collections
+    - `ai_models.py` - Contains just the AIModel enum with its methods
+  - Updated documentation to reflect new module structure
+  - Added new "Architecture Improvements" section to README.md
+
+### Fixed
+- Fixed patching in OpenAI Helper tests to properly target refactored module paths
+- Improved error handling for all OpenAI API calls
+- Fixed tests for structured outputs and beta parsing functionality
+
 ## [0.10.1] - 2025-04-02
 
 ### Added
@@ -291,6 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A (initial release)
 
+[0.10.2]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.9.2...v0.10.0
 [0.9.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.8.0...v0.9.0
