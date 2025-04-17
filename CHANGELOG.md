@@ -5,9 +5,17 @@ All notable changes to the `cws-helpers` package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2024-06-10
+
+### Changed
+
+- youtube_helper: Removed passing options to yt_dlp.YoutubeDL in get_video_info. Now always uses default yt-dlp options for info extraction.
+- Updated tests to match new behavior (no longer expect custom options to be passed to YoutubeDL).
+
 ## [0.10.2] - 2025-04-10
 
 ### Changed
+
 - Refactored OpenAI Helper module structure for improved modularity and maintainability:
   - Split large `completion.py` into specialized files:
     - `chat_completion.py` - Main chat completion function
@@ -22,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added new "Architecture Improvements" section to README.md
 
 ### Fixed
+
 - Fixed patching in OpenAI Helper tests to properly target refactored module paths
 - Improved error handling for all OpenAI API calls
 - Fixed tests for structured outputs and beta parsing functionality
@@ -29,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.1] - 2025-04-02
 
 ### Added
+
 - Enhanced OpenAI Helper with model-specific parameter compatibility:
   - Added `get_unsupported_parameters` method to AIModel to identify parameters not supported by specific models
   - Added automatic parameter filtering in API calls based on model compatibility
@@ -36,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation with examples of model-specific parameter handling
 
 ### Fixed
+
 - Fixed error when using temperature parameter with o3-mini and o1 models by automatically filtering it out
 - Fixed error when using top_p parameter with o3-mini and o1 models by automatically filtering it out
 - Fixed error when using parallel_tool_calls parameter with o3-mini and o1 models by automatically filtering it out
@@ -43,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2025-04-01
 
 ### Added
+
 - Enhanced OpenAI Helper with model-specific logic:
   - Added AIModel and AIProvider enums for model management
   - Improved token parameter handling for different model types
@@ -53,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added comprehensive tests for all new functionality
 
 ### Changed
+
 - Updated OpenAI dependency to version 1.68.2
 - Improved error handling in OpenAI API calls
 - Enhanced documentation for model-specific features
@@ -60,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.2] - 2025-03-23
 
 ### Changed
+
 - Updated OpenAI dependency to use version constraint `^1.65.5` instead of fixed version `1.65.5` to allow compatibility with newer versions
 - Enhanced version compatibility checking in OpenAIHelper to support semantic versioning principles
 - Improved logging around version compatibility warnings
@@ -67,11 +81,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.1] - 2025-03-21
 
 ### Fixed
+
 - Changed some log statements to "debug" level to prevent unnecessary output in production
 
 ## [0.9.0] - 2025-03-21
 
 ### Added
+
 - Enhanced Logger with contextual information:
   - Added automatic detection of calling context (function name, class, file, line number)
   - New `CONTEXT_DISPLAY` environment variable with options: "none", "function", "class_function", "full"
@@ -81,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation with examples of contextual logging options
 
 ### Changed
+
 - Enhanced OpenAI Helper with structured outputs support:
   - Added support for the beta parse endpoint for improved Pydantic model handling
   - New `create_structured_chat_completion` method for direct access to the parse endpoint
@@ -90,15 +107,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation with examples of using structured outputs
 
 ### Removed
+
 - Removed `DETAILED_CONSOLE_OUTPUT` environment variable from logger as the new contextual logging feature provides a more comprehensive and flexible alternative
 
 ### Fixed
+
 - Refactored message creation in OpenAI Helper into a helper method for better code organization
 - Improved error handling for JSON parsing and API compatibility
 
 ## [0.8.0] - 2025-03-21
 
 ### Added
+
 - Enhanced OpenAI Helper with structured outputs support:
   - Added support for the beta parse endpoint for improved Pydantic model handling
   - New `create_structured_chat_completion` method for direct access to the parse endpoint
@@ -108,12 +128,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation with examples of using structured outputs
 
 ### Changed
+
 - Refactored message creation in OpenAI Helper into a helper method for better code organization
 - Improved error handling for JSON parsing and API compatibility
 
 ## [0.7.4] - 2025-03-20
 
 ### Changed
+
 - Enhanced `list_available_captions` method in YoutubeHelper:
   - Now returns full `YTDLPCaption` objects instead of just `CaptionExtension` enums
   - This provides access to caption URLs and other metadata, enabling direct download
@@ -123,29 +145,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.3] - 2025-03-19
 
 ### Added
+
 - Enhanced `list_available_captions` method in YoutubeHelper:
   - Added new `return_all_captions` parameter (default: False) to control caption filtering
   - Now uses caption preferences from `_extract_captions` by default
   - Returns all available captions only when explicitly requested
 
 ### Changed
+
 - Improved efficiency of caption handling with early returns
 - Updated tests to verify new caption filtering behavior
 
 ## [0.7.2] - 2025-03-18
 
 ### Added
+
 - Enhanced caption handling in YoutubeHelper:
   - Added new `_process_captions_for_model` method for better caption data processing
   - Added support for custom download options in `get_video_info` method
   - Added comprehensive tests for caption functionality
 
 ### Fixed
+
 - Fixed issue with captions not being properly processed in YoutubeHelper
 - Fixed validation errors when processing caption data from yt-dlp
 - Improved handling of automatic captions with 'auto-' prefix
 
 ### Changed
+
 - Updated YouTube helper documentation:
   - Corrected method signatures and return types to match implementation
   - Added detailed documentation for models and caption handling
@@ -155,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.1] - 2025-03-15
 
 ### Changed
+
 - Enhanced logging in YoutubeHelper:
   - Added method name context to log messages for better traceability
   - Changed log level from debug to fine for several methods to improve log readability
@@ -163,6 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] - 2025-03-10
 
 ### Added
+
 - Anthropic Helper module for interacting with Claude API:
   - AnthropicHelper class for simplified Claude API interactions
   - Support for all Claude models (3.7, 3.5, 3, and 2 series)
@@ -181,6 +210,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0] - 2025-04-12
 
 ### Added
+
 - PowerPath API Helper module with the following features:
   - Complete interface for the PowerPath educational content management API
   - PowerPathClient for making API requests with automatic error handling
@@ -197,11 +227,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 100% test coverage for all implemented endpoints
 
 ### Changed
+
 - Updated project dependencies to include requests and pydantic
 
 ## [0.5.0] - 2025-04-05
 
 ### Added
+
 - Google Helper module with the following features:
   - GoogleHelper class for interacting with Google APIs
   - Authentication handling with token refresh
@@ -216,11 +248,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unit tests for all GoogleHelper methods and handlers
 
 ### Changed
+
 - Updated project dependencies to include Google API libraries
 
 ## [0.4.0] - 2025-03-29
 
 ### Added
+
 - YouTube Helper module with the following features:
   - YoutubeHelper class for interacting with YouTube videos
   - Video information extraction using yt-dlp
@@ -235,11 +269,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unit tests for all YoutubeHelper methods
 
 ### Changed
+
 - Updated project dependencies to include yt-dlp
 
 ## [0.3.0] - 2025-03-22
 
 ### Added
+
 - AWS Helper module with the following features:
   - S3Helper class for S3 operations
   - Type-safe interface with Pydantic models
@@ -255,11 +291,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Mocked AWS services using moto
 
 ### Changed
+
 - Updated project dependencies to include boto3
 
 ## [0.2.0] - 2025-03-15
 
 ### Added
+
 - OpenAI Helper module with the following features:
   - Simple interface for OpenAI's API
   - Support for text completions
@@ -278,6 +316,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added conftest.py for pytest configuration
 
 ### Changed
+
 - Updated project dependencies to include OpenAI and Pydantic
 - Moved documentation from docs/ directory to README.md files in each helper's directory
 - Updated How_to_add_a_new_helper.md with improved instructions for documentation
@@ -285,6 +324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-03-09
 
 ### Added
+
 - Initial project structure with Poetry dependency management
 - Logger module with the following features:
   - Custom log levels (FINE, STEP, SUCCESS)
@@ -298,20 +338,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Testing_Guide.md for test development
 
 ### Changed
+
 - N/A (initial release)
 
 ### Deprecated
+
 - N/A (initial release)
 
 ### Removed
+
 - N/A (initial release)
 
 ### Fixed
+
 - N/A (initial release)
 
 ### Security
+
 - N/A (initial release)
 
+[0.10.3]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.2...v0.10.3
 [0.10.2]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/caseywschmid/cws-helpers/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.9.2...v0.10.0
@@ -327,4 +373,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.4.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/caseywschmid/cws-helpers/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/caseywschmid/cws-helpers/releases/tag/v0.1.0 
+[0.1.0]: https://github.com/caseywschmid/cws-helpers/releases/tag/v0.1.0

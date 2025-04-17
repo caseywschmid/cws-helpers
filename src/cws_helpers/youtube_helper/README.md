@@ -123,16 +123,10 @@ from cws_helpers import YoutubeHelper
 
 youtube = YoutubeHelper()
 
-# Use custom download options to improve caption retrieval
-video_info = youtube.get_video_info(
-    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    download_options={
-        "writesubtitles": True,        # Enable subtitle downloading
-        "writeautomaticsub": True,     # Enable automatic subtitle downloading
-        "subtitleslangs": ["en", "es", "fr", "de"],  # Specify languages
-        "skip_download": True,         # Skip video download (captions only)
-    }
-)
+# Note: As of v0.10.3, get_video_info always uses default yt-dlp options and ignores custom download_options.
+video_info = youtube.get_video_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+# If you need custom caption handling, use list_available_captions or process captions from video_info manually.
 ```
 
 ### Custom Download Options
@@ -147,15 +141,7 @@ youtube = YoutubeHelper({
     'subtitleslangs': ['en', 'es']
 })
 
-# Or provide options for a specific download
-video_info = youtube.get_video_info(
-    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    download_options={
-        'format': 'bestvideo+bestaudio',
-        'writesubtitles': True,
-        'subtitleslangs': ['en', 'es']
-    }
-)
+# The download_options argument is now ignored in get_video_info.
 ```
 
 ## API Reference
