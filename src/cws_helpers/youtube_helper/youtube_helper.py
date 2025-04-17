@@ -182,10 +182,10 @@ class YoutubeHelper():
         log.debug("get_video_info")
         
         # Use custom download options if provided, otherwise use default options
-        options = download_options if download_options is not None else self.options
+        # options = download_options if download_options is not None else self.options   
         
         try:
-            with yt_dlp.YoutubeDL(options) as ydl:
+            with yt_dlp.YoutubeDL() as ydl:
                 try:
                     result = ydl.extract_info(url, download=False)
                     if not result:
@@ -594,7 +594,7 @@ class YoutubeHelper():
                 'skip_download': True,
             })
             
-            with yt_dlp.YoutubeDL(options) as ydl:
+            with yt_dlp.YoutubeDL() as ydl:
                 try:
                     # Extract info without downloading
                     result = ydl.extract_info(url, download=False)

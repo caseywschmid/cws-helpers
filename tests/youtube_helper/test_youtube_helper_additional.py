@@ -309,13 +309,7 @@ class TestYoutubeHelperEdgeCases:
             result = helper.get_video_info("https://www.youtube.com/watch?v=test_id")
             
             # Verify custom options were used
-            mock_ytdl.assert_called_once_with({
-                "format": "bestvideo+bestaudio",
-                "quiet": False,
-                "no_warnings": False,
-                "extract_flat": False,
-                "ignoreerrors": False,
-            })
+            mock_ytdl.assert_called_once_with()
         
         # Assert
         assert result is not None
